@@ -9,7 +9,8 @@ import tango
 from tango import DevFailed
 
 sys.path.append('../TangoUtils')
-from TangoUtils import config_logger, log_exception
+from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
+from log_exception import log_exception
 
 TRUE_VALUES = ('true', 'on', '1', 'y', 'yes')
 FALSE_VALUES = ('false', 'off', '0', 'n', 'no')

@@ -20,20 +20,21 @@ from tango.server import Device, attribute, command, pipe, device_property
 from TangoServerPrototype import TangoServerPrototype
 from TangoShotDumper import TangoShotDumper
 sys.path.append('../TangoUtils')
-from TangoUtils import log_exception
+from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
+from log_exception import log_exception
 
 
 class TangoShotDumperServer(TangoServerPrototype, TangoShotDumper):
-    server_version = '1.1'
+    server_version = '2.0'
     server_name = 'Tango Shot Dumper Server'
 
-    shot_number = attribute(label="shot_number", dtype=int,
+    shot_number = attribute(label="last_shot_number", dtype=int,
                             display_level=DispLevel.OPERATOR,
                             access=AttrWriteType.READ,
                             unit="", format="%d",
                             doc="Last shot number")
 
-    shot_time = attribute(label="shot_time", dtype=float,
+    shot_time = attribute(label="last_shot_time", dtype=float,
                           display_level=DispLevel.OPERATOR,
                           access=AttrWriteType.READ,
                           unit="s", format="%f",
@@ -57,15 +58,15 @@ class TangoShotDumperServer(TangoServerPrototype, TangoShotDumper):
             TangoServerPrototype.set_config(self)
             # set shot_number and short time from DB
             db = self.device_proxy.get_device_db()
-            pr = db.get_device_attribute_property(self.get_name(), 'shot_number')
             try:
-                value = int(pr['shot_number']['__value'][0])
+                pr = self.get_attribute_property('shot_number', '__value')
+                value = int(pr)
             except:
                 value = 0
             self.write_shot_number(value)
             # set shot_time
-            pr = db.get_device_attribute_property(self.get_name(), 'shot_time')
             try:
+                pr = db.get_device_attribute_property(self.get_name(), 'shot_time')
                 value = float(pr['shot_time']['__value'][0])
             except:
                 value = 0.0

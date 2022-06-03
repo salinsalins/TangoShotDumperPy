@@ -14,11 +14,16 @@ import zipfile
 
 sys.path.append('../TangoUtils')
 from Configuration import Configuration
-from config_logger import *
+from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
+from log_exception import log_exception
+
+DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\data\\',
+                  "shot_number": 1, "shot_time": 0.0, "devices": []
+                  }
 
 
 class TangoShotDumper:
-    _version = '1.1'
+    _version = '2.0'
     _name = 'Tango Shot Dumper'
 
     def __init__(self, config_file_name=None):
@@ -30,18 +35,10 @@ class TangoShotDumper:
         self.locked = False
         self.lock_file = None
         if config_file_name is None:
-            if len(sys.argv) > 1:
-                self.config_file_name = self.__class__.__name__ + '_' + sys.argv[1].strip() + '.json'
-            else:
-                self.config_file_name = self.__class__.__name__ + '.json'
-        else:
-            self.config_file_name = config_file_name
+            config_file_name = self.__class__.__name__ + '.json'
+        self.config_file_name = config_file_name
         # default config
-        self.config = Configuration(self.config_file_name,
-                                    {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\data\\',
-                                     "shot_number": 1, "shot_time": 0.0, "devices": []
-                                     }
-                                    )
+        self.config = Configuration(self.config_file_name, DEFAULT_CONFIG)
         self.out_root_dir = self.config.get("out_root_dir")
         self.shot_number_value = self.config.get("shot_number")
         self.shot_time_value = self.config.get("shot_time")
@@ -94,7 +91,7 @@ class TangoShotDumper:
                     else:
                         self.logger.info("No 'eval' option for %s" % device)
                 except:
-                    log_exception(self, "Device creation error in %s", str(device), level=logging.WARNING)
+                    log_exception(self, "Device creation error for %s", str(device), level=logging.WARNING)
             if len(self.dumper_items) > 0:
                 self.logger.debug('%d dumper devices has been configured', len(self.dumper_items))
                 return True
@@ -121,7 +118,7 @@ class TangoShotDumper:
                 if item.activate():
                     n += 1
             except:
-                log_exception(self, "%s activation error", item)
+                log_exception(self, "%s activation error", item.name)
         return n
 
     def check_new_shot(self):
@@ -133,7 +130,7 @@ class TangoShotDumper:
                     self.write_shot_time(time.time())
                     return True
             except:
-                log_exception(self, "Error checking new shot for %s", item)
+                log_exception(self, "Error checking new shot for %s", item.name)
         return False
 
     @staticmethod
