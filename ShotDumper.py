@@ -228,6 +228,8 @@ class AdlinkADC:
                         n1 = int((pv - self.x_data[0]) / dx)
                         n2 = int((pv +  pl - self.x_data[0]) / dx)
                         ml[pn] = self.attr.value[n1:n2].mean()
+                        n = numpy.searchsorted(self.x_data, [pv, pv+pl])
+                        ml[pn] = self.attr.value[n[0]:n[1]].mean()
                     except:
                         ml[pn] = 0.0
             return ml
