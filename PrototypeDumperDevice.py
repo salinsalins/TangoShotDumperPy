@@ -12,11 +12,10 @@ sys.path.append('../TangoUtils')
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
 
-TRUE_VALUES = ('true', 'on', '1', 'y', 'yes')
-FALSE_VALUES = ('false', 'off', '0', 'n', 'no')
-
 
 class PrototypeDumperDevice:
+    TRUE_VALUES = ('true', 'on', '1', 'y', 'yes')
+    FALSE_VALUES = ('false', 'off', '0', 'n', 'no')
 
     class Channel:
         def __init__(self, device, channel, prefix='chany', format='%03i'):
@@ -93,8 +92,8 @@ class PrototypeDumperDevice:
             mrk = self.marks()
             for key in mrk:
                 try:
-                    range = mrk[key]
-                    index = numpy.logical_and(self.x >= range[0], self.x <= range[1])
+                    rng = mrk[key]
+                    index = numpy.logical_and(self.x >= rng[0], self.x <= rng[1])
                     if numpy.any(index):
                         result[key] = self.y[index].mean()
                     else:
