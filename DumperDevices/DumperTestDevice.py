@@ -1,5 +1,7 @@
 import time
-from DumperDevices import *
+
+import numpy
+
 from PrototypeDumperDevice import PrototypeDumperDevice
 
 
