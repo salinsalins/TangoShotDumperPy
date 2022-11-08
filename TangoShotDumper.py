@@ -12,6 +12,8 @@ import sys
 import time
 import zipfile
 
+from Devices import *
+
 sys.path.append('../TangoUtils')
 from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
@@ -87,7 +89,11 @@ class TangoShotDumper:
                         item = eval(device["eval"])
                         item.logger = self.logger
                         self.dumper_items.append(item)
-                        self.logger.info("%s has been added" % item.name)
+                        if hasattr(item, 'channel'):
+                            name = item.name + '/' + item.channel.name
+                        else:
+                            name = item.name
+                        self.logger.info("%s has been added" % name)
                     else:
                         self.logger.info("No 'eval' option for %s" % device)
                 except:

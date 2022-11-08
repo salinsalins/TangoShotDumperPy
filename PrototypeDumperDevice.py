@@ -93,13 +93,15 @@ class PrototypeDumperDevice:
             for key in mrk:
                 try:
                     rng = mrk[key]
-                    index = numpy.logical_and(self.x >= rng[0], self.x <= rng[1])
-                    if numpy.any(index):
-                        result[key] = self.y[index].mean()
-                    else:
-                        result[key] = float('nan')
+                    # index = numpy.logical_and(self.x >= rng[0], self.x <= rng[1])
+                    # if numpy.any(index):
+                    #     result[key] = self.y[index].mean()
+                    # else:
+                    #     result[key] = float('nan')
+                    index = numpy.searchsorted(self.x, [rng[0], rng[1]])
+                    result[key] = self.y[index[0]:index[1]].mean()
                 except:
-                    pass
+                    result[key] = float('nan')
             return result
 
         def save_log(self, log_file: IO, additional_marks=None):
@@ -272,7 +274,11 @@ class PrototypeDumperDevice:
                 self.device = tango.DeviceProxy(self.name)
                 self.active = True
                 self.defined_in_db = True
-                self.logger.debug("%s has been activated", self.name)
+                if hasattr(self, 'channel'):
+                    name = self.name + '/' + self.channel.name
+                else:
+                    name = self.name
+                self.logger.debug("%s has been activated", name)
                 return True
             except DevFailed:
                 self.device = None
@@ -286,6 +292,8 @@ class PrototypeDumperDevice:
                 else:
                     log_exception("%s activation error: ", self.name)
             except:
+                self.device = None
+                self.active = False
                 log_exception("%s activation error: ", self.name)
         return False
 
