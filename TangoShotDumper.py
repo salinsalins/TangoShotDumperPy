@@ -12,7 +12,7 @@ import sys
 import time
 import zipfile
 
-from Devices import *
+import Devices
 
 sys.path.append('../TangoUtils')
 from Configuration import Configuration

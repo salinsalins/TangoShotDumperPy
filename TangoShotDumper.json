@@ -6,7 +6,6 @@
     "shot_time": 1667895266.9006295,
     "devices": [
         {
-            "exec": "from Devices.AdlinkADC import AdlinkADC",
             "eval": "AdlinkADC('binp/nbi/adc0', folder='ADC_0')"
         },
         {
