@@ -2,8 +2,8 @@
     "sleep": 1.0,
     "log_level": 10,
     "out_root_dir": "D:\\testdata\\",
-    "shot_number": 25001,
-    "shot_time": 1667894720.9334018,
+    "shot_number": 25004,
+    "shot_time": 1667895266.9006295,
     "devices": [
         {
             "exec": "from Devices.AdlinkADC import AdlinkADC",
@@ -252,5 +252,5 @@
             "eval": "TangoAttribute('binp/CS/bot','IOvenr', folder='Csbot')"
         }
     ],
-    "shot_dts": "2022-11-08 15:05:20"
+    "shot_dts": "2022-11-08 15:14:26"
 }
