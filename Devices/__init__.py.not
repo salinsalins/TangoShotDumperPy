@@ -1,0 +1,38 @@
+
+""" Dynamically imports all modules in this package. """
+# import traceback
+import os
+import importlib
+
+global __all__
+__all__ = []
+globals_, locals_ = globals(), locals()
+
+
+def import_all_modules_in_folder():
+    # Dynamically import all the package modules in this file's directory.
+    for filename in os.listdir(__name__):
+        # Process all python files in directory that don't start
+        # with underscore (which also prevents this module from
+        # importing itself).
+        if filename[0] != '_' and filename.split('.')[-1] in ('py', 'pyw'):
+            module_name = filename.split('.')[0]  # Filename sans extension.
+            package_module_name = '.'.join([__name__, module_name])
+            module = __import__(package_module_name, None, None, [module_name])
+            __all__.append(module_name)
+            txt = f'from .{module_name} import {module_name} as {module_name}'
+#            exec(txt)
+            pass
+            # importlib.import_module(package_module)
+            # try:
+            #     module = __import__(package_module, globals_, locals_, [modulename])
+            # except:
+            #     traceback.print_exc()
+            #     raise
+            # for name in module.__dict__:
+            #     if not name.startswith('_'):
+            #         globals_[name] = module.__dict__[name]
+            #         __all__.append(name)
+
+import_all_modules_in_folder()
+del import_all_modules_in_folder

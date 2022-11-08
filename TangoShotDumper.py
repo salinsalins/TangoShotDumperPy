@@ -12,7 +12,15 @@ import sys
 import time
 import zipfile
 
-import Devices
+name = 'Devices'
+for filename in os.listdir(name):
+    # Process all python files in directory that don't start
+    # with underscore (which also prevents this module from
+    # importing itself).
+    if filename[0] != '_' and filename.split('.')[-1] in ('py', 'pyw'):
+        module_name = filename.split('.')[0]  # Filename sans extension.
+        txt = f'from {name}.{module_name} import {module_name} as {module_name}'
+        exec(txt)
 
 sys.path.append('../TangoUtils')
 from Configuration import Configuration
