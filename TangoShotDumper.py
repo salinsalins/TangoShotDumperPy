@@ -12,20 +12,23 @@ import sys
 import time
 import zipfile
 
-name = 'Devices'
-for filename in os.listdir(name):
-    # Process all python files in directory that don't start
-    # with underscore (which also prevents this module from
-    # importing itself).
-    if filename[0] != '_' and filename.split('.')[-1] in ('py', 'pyw'):
-        module_name = filename.split('.')[0]  # Filename sans extension.
-        txt = f'from {name}.{module_name} import {module_name} as {module_name}'
-        exec(txt)
-
 sys.path.append('../TangoUtils')
 from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
+
+folder_name = 'Devices'
+for filename in os.listdir(folder_name):
+    # Process all python files in a directory that don't start
+    # with underscore (which also prevents this module from
+    # importing itself).
+    if filename[0] != '_' and filename.split('.')[-1] in ('py', 'pyw'):
+        module_name = filename.split('.')[0]
+        txt = f'from {folder_name}.{module_name} import {module_name} as {module_name}'
+        try:
+            exec(txt)
+        except:
+            log_exception(f'Error during import from {folder_name}.{module_name}')
 
 DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\data\\',
                   "shot_number": 1, "shot_time": 0.0, "devices": []
