@@ -18,19 +18,23 @@ from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
 
+# import all modules from Devices folder
 folder_name = 'Devices'
 for filename in os.listdir(folder_name):
     # Process all python files in a directory that don't start
     # with underscore (which also prevents this module from
     # importing itself).
-    if filename[0] != '_' and filename.split('.')[-1] in ('py', 'pyw'):
-        module_name = filename.split('.')[0]
+    if filename[0] == '_':
+        continue
+    fns = filename.split('.')
+    if fns[-1] in ('py', 'pyw'):
+        module_name = fns[0]
         # a = runpy.run_path(os.path.join('./', folder_name, filename), run_name='__main__')
-        txt = f'from {folder_name}.{module_name} import {module_name} as {module_name}'
         try:
-            exec(txt)
+            exec(f'from {folder_name}.{module_name} import {module_name} as {module_name}')
         except:
             log_exception(f'Error during import from {folder_name}.{module_name}')
+del fns, filename, module_name, folder_name
 
 DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\data\\',
                   "shot_number": 1, "shot_time": 0.0, "devices": []
