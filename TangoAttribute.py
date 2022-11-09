@@ -10,6 +10,9 @@ class TangoAttribute(PrototypeDumperDevice):
         self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
         self.channel.logger = self.logger
 
+        def activate(self):
+            result = super().activate(self)
+
     def save(self, log_file, zip_file, folder=None):
         if folder is None:
             folder = self.folder
