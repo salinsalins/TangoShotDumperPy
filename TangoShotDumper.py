@@ -8,6 +8,7 @@ A. L. Sanin, started 07.09.2021
 import datetime
 import logging
 import os
+import runpy
 import sys
 import time
 import zipfile
@@ -24,6 +25,7 @@ for filename in os.listdir(folder_name):
     # importing itself).
     if filename[0] != '_' and filename.split('.')[-1] in ('py', 'pyw'):
         module_name = filename.split('.')[0]
+        # a = runpy.run_path(os.path.join('./', folder_name, filename), run_name='__main__')
         txt = f'from {folder_name}.{module_name} import {module_name} as {module_name}'
         try:
             exec(txt)
