@@ -9,7 +9,7 @@ class TangoAttribute(PrototypeDumperDevice):
         self.force = force
         self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
         self.channel.logger = self.logger
-        if attribute_name not in self.device.get_attribute_list():
+        if self.device and attribute_name not in self.device.get_attribute_list():
             self.logger.error(f'{device_name} do not have attribute {attribute_name}')
             self.reactivate_if_not_defined = False
             self.active = False
