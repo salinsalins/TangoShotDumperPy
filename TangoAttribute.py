@@ -9,9 +9,11 @@ class TangoAttribute(PrototypeDumperDevice):
         self.force = force
         self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
         self.channel.logger = self.logger
-
-        def activate(self):
-            result = super().activate(self)
+        if attribute_name not in self.device.get_attribute_list():
+            self.logger.error(f'{device_name} do not have attribute {attribute_name}')
+            self.reactivate_if_not_defined = False
+            self.active = False
+            self.defined_in_db = False
 
     def save(self, log_file, zip_file, folder=None):
         if folder is None:
