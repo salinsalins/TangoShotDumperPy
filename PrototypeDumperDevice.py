@@ -280,10 +280,9 @@ class PrototypeDumperDevice:
                     name = self.name
                 self.logger.debug("%s has been activated", name)
                 return True
-            except DevFailed:
+            except DevFailed as ex_value:
                 self.device = None
                 self.active = False
-                ex_type, ex_value, traceback = sys.exc_info()
                 if 'DeviceNotDefined' in ex_value.args[0].reason:
                     self.logger.error('Device %s is not defined in DB', self.name)
                     if not self.reactivate_if_not_defined:
