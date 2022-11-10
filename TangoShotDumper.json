@@ -1,6 +1,6 @@
 {
     "sleep": 1.0,
-    "log_level": 10,
+    "log_level": 20,
     "out_root_dir": "D:\\testdata\\",
     "shot_number": 25004,
     "shot_time": 1667895266.9006295,

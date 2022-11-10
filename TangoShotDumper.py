@@ -36,7 +36,7 @@ for filename in os.listdir(folder_name):
             log_exception(f'Error during import from {folder_name}.{module_name}')
 del fns, filename, module_name, folder_name
 
-DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\data\\',
+DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.INFO, "out_root_dir": '.\\data\\',
                   "shot_number": 1, "shot_time": 0.0, "devices": []
                   }
 
@@ -45,8 +45,8 @@ class TangoShotDumper:
     _version = '2.0'
     _name = 'Tango Shot Dumper'
 
-    def __init__(self, config_file_name=None):
-        self.logger = config_logger(format_string=LOG_FORMAT_STRING_SHORT)
+    def __init__(self, config_file_name=None, level=logging.INFO):
+        self.logger = config_logger(format_string=LOG_FORMAT_STRING_SHORT, level=level)
         # set defaults
         self.log_file = None
         self.zip_file = None
@@ -263,7 +263,11 @@ class TangoShotDumper:
 
 
 if __name__ == "__main__":
-    tsd = TangoShotDumper()
+    try:
+        level = int(sys.argv[1])
+    except:
+        level = 20
+    tsd = TangoShotDumper(level=level)
     if tsd.set_config():
         t0 = time.time()
         while True:

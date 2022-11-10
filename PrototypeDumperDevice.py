@@ -280,26 +280,27 @@ class PrototypeDumperDevice:
                     name = self.name
                 self.logger.debug("%s has been activated", name)
                 return True
-            except ConnectionFailed:
+            except ConnectionFailed as e:
                 self.device = None
                 self.active = False
                 log_exception("%s connection error: ", self.name)
                 if not self.reactivate_if_not_defined:
                     self.defined_in_db = False
                     self.logger.error('Dumper restart required to activate device %s', self.name)
-            # except DevFailed as ex_value:
-            #     self.device = None
-            #     self.active = False
-            #     if 'DeviceNotDefined' in ex_value.args[0].reason:
-            #         self.logger.error('Device %s is not defined in DB', self.name)
-            #         if not self.reactivate_if_not_defined:
-            #             self.defined_in_db = False
-            #             self.logger.error('Dumper restart required to activate device %s', self.name)
-            #     else:
-            #         log_exception("%s activation error: ", self.name)
+            except DevFailed as ex_value:
+                self.device = None
+                self.active = False
+                if 'DeviceNotDefined' in ex_value.args[0].reason:
+                    self.logger.error('Device %s is not defined in DB', self.name)
+                    if not self.reactivate_if_not_defined:
+                        self.defined_in_db = False
+                        self.logger.error('Dumper restart required to activate device %s', self.name)
+                else:
+                    log_exception("%s activation error: ", self.name)
             except:
                 self.device = None
                 self.active = False
+                a = sys.exc_info()
                 log_exception("%s activation error: ", self.name)
         return False
 
