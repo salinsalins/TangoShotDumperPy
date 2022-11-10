@@ -283,10 +283,10 @@ class PrototypeDumperDevice:
                     self.defined_in_db = False
                     self.logger.error('Dumper restart required to activate device %s', self.name)
             except DevFailed as ex_value:
-                self.device = None
                 self.active = False
                 if 'DeviceNotDefined' in ex_value.args[0].reason:
                     self.logger.error('Device %s is not defined in DB. Restart dumper to reactivate', self.name)
+                    self.device = None
                     self.reactivate = False
                 else:
                     log_exception("%s activation error: ", self.full_name)
