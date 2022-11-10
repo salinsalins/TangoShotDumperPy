@@ -10,45 +10,32 @@ class TangoAttribute(PrototypeDumperDevice):
         self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
         self.channel.logger = self.logger
         self.full_name = self.name + '/' + attribute_name
-        if self.device and attribute_name not in self.device.get_attribute_list():
-            self.logger.error(f'{device_name} do not have attribute {attribute_name}')
-            self.active = False
 
     def activate(self):
         super().activate()
-        if self.device and self.attribute_name not in self.device.get_attribute_list():
+        if self.active and self.attribute_name not in self.device.get_attribute_list():
             self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
             self.active = False
             return False
-        super().activate()
-
+        return self.active
 
     def save(self, log_file, zip_file, folder=None):
         if folder is None:
             folder = self.folder
         # save_data and save_log flags
         properties = self.channel.read_properties(True)
-        sdf = self.as_boolean(properties.get("save_data", [False])[0])
-        slf = self.as_boolean(properties.get("save_log", [False])[0])
-        # force save if requested during attribute creation
-        if self.force:
-            sdf = True
-            slf = True
-        if sdf or slf:
-            self.read_attribute()
-            self.channel.save_properties(zip_file, folder)
-            if self.channel.y is None:
-                print('    ', self.channel.file_name, '---- No data')
-                return
-        if slf:
-            addition = {}
-            if self.channel.y_attr.data_format == tango._tango.AttrDataFormat.SCALAR:
-                # self.logger.debug("SCALAR attribute %s" % self.attribute_name)
-                if properties.get("history", [False])[0] != 'True':
-                    addition = {'mark': self.channel.y}
-            self.channel.save_log(log_file, addition)
-        if sdf:
-            self.channel.save_data(zip_file, folder)
+        self.read_attribute()
+        self.channel.save_properties(zip_file, folder)
+        if self.channel.y is None:
+            print('    ', self.channel.file_name, '---- No data')
+            return
+        addition = {}
+        if self.channel.y_attr.data_format == tango._tango.AttrDataFormat.SCALAR:
+            # self.logger.debug("SCALAR attribute %s" % self.attribute_name)
+            if properties.get("history", [False])[0] != 'True':
+                addition = {'mark': self.channel.y}
+        self.channel.save_log(log_file, addition)
+        self.channel.save_data(zip_file, folder)
 
     def read_attribute(self):
         self.channel.read_y()
