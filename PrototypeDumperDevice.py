@@ -39,7 +39,7 @@ class PrototypeDumperDevice:
 
         def read_x(self, x_name: str = None):
             if x_name is None:
-                x_name = self.name.replace('y', 'x')
+                x_name = self.name.replace('chany', 'chanx')
             if x_name == self.name:
                 self.x_attr = None
                 self.x = None
