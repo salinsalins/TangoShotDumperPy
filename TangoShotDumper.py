@@ -62,6 +62,7 @@ class TangoShotDumper:
         self.shot_number_value = self.config.get("shot_number")
         self.shot_time_value = self.config.get("shot_time")
         self.dumper_items = []
+        self.device_groups = {}
 
     def read_shot_number(self):
         return self.shot_number_value
@@ -105,12 +106,15 @@ class TangoShotDumper:
                     if 'eval' in device:
                         item = eval(device["eval"])
                         item.logger = self.logger
-                        self.dumper_items.append(item)
-                        if hasattr(item, 'channel'):
-                            name = item.name + '/' + item.channel.name
+                        # self.dumper_items.append(item)
+                        if item.name not in self.device_groups:
+                            self.device_groups[item.name] = {}
+                        if item.full_name in self.device_groups[item.name]:
+                            self.logger.warning(f'Duplicate declaration of {item.full_name} - Ignored')
                         else:
-                            name = item.name
-                        self.logger.info("%s has been added" % name)
+                            self.device_groups[item.name][item.full_name] = item
+                            self.dumper_items.append(item)
+                        self.logger.info("%s has been added" % item.full_name)
                     else:
                         self.logger.info("No 'eval' option for %s" % device)
                 except:
@@ -243,13 +247,20 @@ class TangoShotDumper:
             self.log_file.write('; Shot=%d; Shot_time=%s' % (self.shot_number_value, self.shot_time_value))
             # Open zip file
             self.zip_file = self.open_zip_file(self.out_dir)
-            for item in self.dumper_items:
-                if item.active:
-                    print("Saving from %s" % item.name)
-                    try:
-                        item.save(self.log_file, self.zip_file)
-                    except:
-                        log_exception(self, "Exception saving %s", str(item))
+            # for item in self.dumper_items:
+            for device in self.device_groups:
+                print("Saving from %s" % device)
+                count = 0
+                for item_name in self.device_groups[device]:
+                    item = self.device_groups[device][item_name]
+                    if item.active:
+                        try:
+                            item.save(self.log_file, self.zip_file)
+                            count += 1
+                        except:
+                            log_exception(self, "Exception saving %s", str(item))
+                if count == 0:
+                    print('    ** No active devices **')
             zfn = os.path.basename(self.zip_file.filename)
             self.zip_file.close()
             self.log_file.write('; File=%s\n' % zfn)

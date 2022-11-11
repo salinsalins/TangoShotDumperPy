@@ -3,7 +3,7 @@ import time
 import numpy
 import tango
 
-from TangoAttribute import TangoAttribute
+from TangoAttributeOld import TangoAttribute
 
 
 class TangoAttributeHistory(TangoAttribute):
