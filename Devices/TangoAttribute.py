@@ -13,11 +13,17 @@ class TangoAttribute(PrototypeDumperDevice):
 
     def activate(self):
         super().activate()
-        if self.active and self.attribute_name not in self.device.get_attribute_list():
+        try:
+            self.device.read_attribute(self.attribute_name)
+            # if self.active and self.attribute_name not in self.device.get_attribute_list():
+            #     self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
+            #     self.active = False
+            #     return False
+            return self.active
+        except:
             self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
             self.active = False
-            return False
-        return self.active
+            log_exception('Error reading attribute')
 
     def save(self, log_file, zip_file, folder=None):
         if folder is None:
