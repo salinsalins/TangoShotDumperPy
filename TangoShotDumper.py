@@ -287,3 +287,5 @@ if __name__ == "__main__":
                 tsd.process()
             except:
                 log_exception(tsd, "%s Process exception", tsd)
+    else:
+        tsd.logger.error('set_config returns False')
