@@ -237,7 +237,7 @@ class TangoShotDumper:
             # new shot - save signals
             dts = self.date_time_stamp()
             self.config['shot_dts'] = dts
-            print("\r\n%s New Shot %d" % (dts, self.shot_number_value))
+            print("\r\n**** %s New Shot %d *****" % (dts, self.shot_number_value))
             self.make_log_folder()
             self.lock_output_dir()
             self.log_file = self.open_log_file(self.out_dir)

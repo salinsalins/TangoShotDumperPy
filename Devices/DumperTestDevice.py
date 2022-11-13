@@ -46,25 +46,9 @@ class DumperTestDevice(PrototypeDumperDevice):
         log_file.write('; %s=%f' % (self.name, self.time))
         print('    %s = %f' % (self.name, self.time))
         if self.points > 0:
-            t0 = time.time()
-            signal = self.Channel(None, 1)  # PrototypeDumperDevice.Channel()
-            signal.name = 'test_device_%d' % self.n
+            signal = self.Channel(None, self.n, prefix='test_device_chany')  # PrototypeDumperDevice.Channel()
             signal.x = numpy.linspace(0.0, 2.0 * numpy.pi, self.points)
-            signal.y = numpy.sin(signal.x)
-            # signal.properties = self.properties
-            # signal.properties['save_numpy'] = ['1']
+            signal.y = numpy.sin(signal.x + time.time() + self.n)
             signal.save_data(zip_file, folder)
-            # self.logger.debug('dT = %s', time.time() - t0)
-            # signal.save_properties(zip_file, folder)
-            # signal.save_properties(zip_file, folder)
-            # buf = ""
-            # for k in range(self.points):
-            #     w = 2.0 * numpy.pi * float(k) / (self.points -1)
-            #     s = '%f; %f' % (float(k), numpy.sin(w + float(self.n)) + 0.1 * numpy.sin(4.0 * w))
-            #     buf += s.replace(",", ".")
-            #     if k < self.points - 1:
-            #         buf += '\r\n'
-            # entry = folder + "/channel_%d.txt" % self.n
-            # zip_file.writestr(entry, buf)
-            entry = folder + "/paramchannel_%d.txt" % self.n
-            zip_file.writestr(entry, "name=test_device_%d\r\nxlabel=Point number\r\nunit=a.u." % self.n)
+            entry = folder + '/' + signal.name.replace('chan', 'paramchan') + ".txt"
+            zip_file.writestr(entry, "name=%s\r\nxlabel=Phase [radians]\r\nunit=a.u." % self.name)
