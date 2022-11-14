@@ -210,7 +210,7 @@ class TangoShotDumper:
         self.logger.debug("Directory unlocked")
 
     def open_log_file(self, folder: str = ''):
-        log_file = open(os.path.join(folder, self.get_log_file_name()), 'a')
+        log_file = open(os.path.join(folder, self.get_log_file_name()), 'a', encoding='cp1251')
         return log_file
 
     @staticmethod
