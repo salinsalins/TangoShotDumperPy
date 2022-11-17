@@ -12,13 +12,20 @@ class TangoAttribute(PrototypeDumperDevice):
         self.full_name = self.name + '/' + attribute_name
 
     def activate(self):
-        super().activate()
+        if self.active:
+            return self.active
+        if not super().activate():
+            self.active = False
+            return self.active
         if self.device is None:
             self.active = False
             return self.active
         try:
-            self.channel.device = self.device
-            self.device.read_attribute(self.attribute_name)
+            if hasattr(self, 'channel'):
+                self.channel.device = self.device
+            ai = self.device.get_attribute_config_ex(self.attribute_name)
+            self.logger.debug("AI %s", ai)
+            #self.device.read_attribute(self.attribute_name)
             # if self.active and self.attribute_name not in self.device.get_attribute_list():
             #     self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
             #     self.active = False
