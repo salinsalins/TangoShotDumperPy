@@ -34,7 +34,7 @@ class PicoLog1000(PrototypeDumperDevice):
         # save channels data and properties
         for i, number in enumerate(channels_list):
             try:
-                chan = PicoLog1000.Channel(self.device, number, format='%02i')
+                chan = PicoLog1000.Channel(self.device, number, format_n='%02i')
                 properties = chan.read_properties()
                 # read flags
                 sdf = self.as_boolean(properties.get("save_data", ['False'])[0])

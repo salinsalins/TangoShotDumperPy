@@ -95,10 +95,11 @@ class TangoShotDumper:
             self.write_shot_time(self.config.get("shot_time", time.time()))
             # Restore devices
             devices = self.config.get("devices", [])
-            self.dumper_items = []
             if len(devices) <= 0:
                 self.logger.error("No devices declared")
                 return False
+            self.dumper_items = []
+            self.device_groups = {}
             for device in devices:
                 try:
                     if 'exec' in device:
@@ -152,9 +153,9 @@ class TangoShotDumper:
         for item in self.dumper_items:
             try:
                 if item.new_shot():
+                    self.write_shot_time(time.time())
                     self.shot_number_value += 1
                     self.write_shot_number(self.shot_number_value)
-                    self.write_shot_time(time.time())
                     return True
             except:
                 log_exception(self, "Error checking new shot for %s", item.name)
@@ -260,13 +261,15 @@ class TangoShotDumper:
                         except:
                             log_exception(self, "Exception saving %s", str(item))
                 if count == 0:
-                    print('    ** No active devices **')
+                    print('    ** No active attributes **')
             zfn = os.path.basename(self.zip_file.filename)
             self.zip_file.close()
             self.log_file.write('; File=%s\n' % zfn)
             self.log_file.close()
             self.unlock_output_dir()
             self.write_config()
+        except KeyboardInterrupt:
+            raise
         except:
             log_exception(self, "Unexpected exception")
         print(self.time_stamp(), "Waiting for next shot ...")
@@ -285,6 +288,8 @@ if __name__ == "__main__":
             time.sleep(tsd.config['sleep'])
             try:
                 tsd.process()
+            except KeyboardInterrupt:
+                raise
             except:
                 log_exception(tsd, "%s Process exception", tsd)
     else:

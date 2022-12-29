@@ -18,11 +18,11 @@ class PrototypeDumperDevice:
     FALSE_VALUES = ('false', 'off', '0', 'n', 'no')
 
     class Channel:
-        def __init__(self, device, channel, prefix='chany', format='%03i'):
+        def __init__(self, device, channel, prefix='chany', format_n='%03i'):
             self.logger = config_logger()
             self.device = device
             if isinstance(channel, int):
-                self.name = prefix + (format % channel)
+                self.name = prefix + (format_n % channel)
             else:
                 self.name = str(channel)
             self.file_name = self.name
@@ -187,7 +187,7 @@ class PrototypeDumperDevice:
                 folder += '/'
             zip_entry = folder + self.file_name + ".txt"
             avg = int(self.read_properties().get("save_avg", ['1'])[0])
-            # save_as_numpy = self.properties.get('save_numpy',['0'])[0] == '1'
+            save_as_numpy = self.properties.get('save_as_numpy',['0'])[0] in PrototypeDumperDevice.TRUE_VALUES
             outbuf = ''
             t0 = time.time()
             if self.x is None:
@@ -279,9 +279,8 @@ class PrototypeDumperDevice:
                 self.device = None
                 self.active = False
                 log_exception("%s connection error: ", self.full_name)
-                if not self.reactivate:
-                    self.defined_in_db = False
-                    self.logger.error('Dumper restart required to activate device %s', self.name)
+                # self.reactivate = False
+                # self.logger.error('Dumper restart required to activate %s', self.name)
             except DevFailed as ex_value:
                 self.active = False
                 if 'DeviceNotDefined' in ex_value.args[0].reason:
@@ -293,7 +292,7 @@ class PrototypeDumperDevice:
             except:
                 self.device = None
                 self.active = False
-                a = sys.exc_info()
+                self.reactivate = False
                 log_exception("Unexpected %s activation error: ", self.full_name)
         return False
 
