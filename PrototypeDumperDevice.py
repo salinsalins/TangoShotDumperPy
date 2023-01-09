@@ -16,6 +16,7 @@ from log_exception import log_exception
 class PrototypeDumperDevice:
     TRUE_VALUES = ('true', 'on', '1', 'y', 'yes')
     FALSE_VALUES = ('false', 'off', '0', 'n', 'no')
+    devices = {}
 
     class Channel:
         def __init__(self, device, channel, prefix='chany', format_n='%03i'):
@@ -251,49 +252,56 @@ class PrototypeDumperDevice:
 
     def __init__(self, device_name: str, reactivate: bool = True):
         self.logger = config_logger()
-        self.name = device_name
+        self.device_name = device_name
         self.active = False
         self.device = None
         self.time = 0.0
         self.activation_timeout = 10.0
         self.reactivate = reactivate
-        self.full_name = self.name
-        self.activate()
-
-    def new_shot(self):
-        return False
+        self.ping = -1.0
 
     def activate(self):
         if self.active:
             return True
         if self.device is None and (time.time() - self.time) < self.activation_timeout:
+            # self.logger.debug('Frequent reactivation request declined')
             return False
         self.time = time.time()
+        if self.device_name in PrototypeDumperDevice.devices:
+            self.device = PrototypeDumperDevice.devices[self.device_name]
+            self.active = True
+            self.logger.debug("%s has been reused", self.device.name())
+            return True
         if self.device is None and self.reactivate:
             try:
-                self.device = tango.DeviceProxy(self.name)
+                self.device = tango.DeviceProxy(self.device_name)
+                self.ping = self.device.ping()
+                PrototypeDumperDevice.devices[self.device_name] = self.device
                 self.active = True
-                self.logger.debug("%s has been activated", self.full_name)
+                self.logger.debug("%s has been activated", self.device.name())
                 return True
-            except ConnectionFailed as e:
+            except ConnectionFailed:
                 self.device = None
                 self.active = False
-                log_exception("%s connection error: ", self.full_name)
-                # self.reactivate = False
-                # self.logger.error('Dumper restart required to activate %s', self.name)
+                log_exception("%s connection error: ", self.device_name)
             except DevFailed as ex_value:
+                self.device = None
                 self.active = False
                 if 'DeviceNotDefined' in ex_value.args[0].reason:
-                    self.logger.error('Device %s is not defined in DB. Restart dumper to reactivate', self.name)
-                    self.device = None
-                    self.reactivate = False
+                    self.logger.error('Device %s is not defined in DB', self.device_name)
                 else:
-                    log_exception("%s activation error: ", self.full_name)
+                    log_exception("Activation error for %s", self.device_name)
+                    self.reactivate = False
+                    self.logger.error('Dumper restart required to activate %s', self.device_name)
             except:
                 self.device = None
                 self.active = False
+                log_exception("Unexpected activation error for %s", self.device_name)
                 self.reactivate = False
-                log_exception("Unexpected %s activation error: ", self.full_name)
+                self.logger.error('Dumper restart required to activate %s', self.device_name)
+        return False
+
+    def new_shot(self):
         return False
 
     def save(self, log_file: IO, zip_file: zipfile.ZipFile, folder: str = None):
@@ -302,33 +310,26 @@ class PrototypeDumperDevice:
         #     self.logger.debug('Reading inactive device')
         #     return
 
-    def property(self, prop_name: str):
-        try:
-            result = self.device.get_property(prop_name)[prop_name]
-            if len(result) == 1:
-                result = result[0]
-            return result
-            # return self.device.get_property(prop_name)[prop_name][0]
-        except:
-            return ''
-
-    def properties(self, filter: str = '*'):
-        # returns dictionary with device properties
-        names = self.device.get_property_list(filter)
-        return self.device.get_property(names)
-
-    @staticmethod
-    def as_boolean(value):
-        value = str(value)
-        if value.lower() in PrototypeDumperDevice.TRUE_VALUES:
-            return True
-        if value.lower() in PrototypeDumperDevice.FALSE_VALUES:
-            return False
-        return None
-
-    @staticmethod
-    def as_int(value):
-        try:
-            return int(str(value))
-        except:
-            return None
+    # def property(self, prop_name: str):
+    #     try:
+    #         result = self.device.get_property(prop_name)[prop_name]
+    #         if len(result) == 1:
+    #             result = result[0]
+    #         return result
+    #         # return self.device.get_property(prop_name)[prop_name][0]
+    #     except:
+    #         return ''
+    #
+    # def properties(self, fltr: str = '*'):
+    #     # returns dictionary with device properties
+    #     names = self.device.get_property_list(fltr)
+    #     return self.device.get_property(names)
+    #
+    # @staticmethod
+    # def as_boolean(value):
+    #     value = str(value)
+    #     if value.lower() in PrototypeDumperDevice.TRUE_VALUES:
+    #         return True
+    #     if value.lower() in PrototypeDumperDevice.FALSE_VALUES:
+    #         return False
+    #     return None

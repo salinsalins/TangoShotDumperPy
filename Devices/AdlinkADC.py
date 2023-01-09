@@ -10,6 +10,8 @@ class AdlinkADC(PrototypeDumperDevice):
         self.shot = self.read_shot()
 
     def read_shot(self):
+        if not self.active:
+            return -1
         try:
             shot = self.device.read_attribute("Shot_id").value
             return shot
@@ -17,12 +19,16 @@ class AdlinkADC(PrototypeDumperDevice):
             return -1
 
     def read_shot_time(self):
+        if not self.active:
+            return -1.0
+        t0 = 1.0
         try:
             t0 = time.time()
             elapsed = self.device.read_attribute('Elapsed')
             if elapsed.quality != tango._tango.AttrQuality.ATTR_VALID:
-                return -t0
-            self.shot_time = t0 - elapsed.value
+                self.shot_time = elapsed.value - t0
+            else:
+                self.shot_time = t0 - elapsed.value
             return self.shot_time
         except:
             return -t0
@@ -37,9 +43,12 @@ class AdlinkADC(PrototypeDumperDevice):
         return True
 
     def save(self, log_file, zip_file, folder=None):
+        if not self.active:
+            return False
         if folder is None:
             folder = self.folder
         attributes = self.device.get_attribute_list()
+        count = 0
         for attr in attributes:
             if attr.startswith("chany"):
                 channel = PrototypeDumperDevice.Channel(self.device, attr)
@@ -71,6 +80,7 @@ class AdlinkADC(PrototypeDumperDevice):
                         if sdf and not data_saved:
                             channel.save_data(zip_file, folder)
                             data_saved = True
+                        count += 1
                         break
                     except:
                         log_exception("%s channel save exception", self.name)
@@ -79,3 +89,4 @@ class AdlinkADC(PrototypeDumperDevice):
                         self.logger.debug("Retries reading %s" % self.name)
                     if retry_count == 0:
                         self.logger.warning("Error reading %s" % self.name)
+        return True
