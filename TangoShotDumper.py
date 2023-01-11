@@ -13,6 +13,8 @@ import sys
 import time
 import zipfile
 
+from PrototypeDumperDevice import PrototypeDumperDevice
+
 sys.path.append('../TangoUtils')
 from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
@@ -106,15 +108,18 @@ class TangoShotDumper:
                         exec(device["exec"])
                     if 'eval' in device:
                         item = eval(device["eval"])
+                        if not isinstance(item, PrototypeDumperDevice):
+                            self.logger.warning(f'Not a dumper unit for "{device["eval"]}"')
+                            continue
                         item.logger = self.logger
                         # self.dumper_items.append(item)
-                        if item.name not in self.device_groups:
-                            self.device_groups[item.name] = {}
-                        if item.full_name in self.device_groups[item.name]:
+                        if item.device_name not in self.device_groups:
+                            self.device_groups[item.device_name] = {}
+                        if item.full_name in self.device_groups[item.device_name]:
                             self.logger.warning(f'Duplicate declaration of {item.full_name} - Ignored')
-                        else:
-                            self.device_groups[item.name][item.full_name] = item
-                            self.dumper_items.append(item)
+                            continue
+                        self.device_groups[item.device_name][item.full_name] = item
+                        self.dumper_items.append(item)
                         self.logger.info("%s has been added" % item.full_name)
                     else:
                         self.logger.info("No 'eval' option for %s" % device)
@@ -145,6 +150,8 @@ class TangoShotDumper:
             try:
                 if item.activate():
                     n += 1
+            except KeyboardInterrupt:
+                raise
             except:
                 log_exception(self, "%s activation error", item.name)
         return n

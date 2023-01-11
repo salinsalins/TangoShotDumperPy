@@ -253,6 +253,8 @@ class PrototypeDumperDevice:
     def __init__(self, device_name: str, reactivate: bool = True):
         self.logger = config_logger()
         self.device_name = device_name
+        self.full_name = device_name
+        self.name = device_name
         self.active = False
         self.device = None
         self.time = 0.0

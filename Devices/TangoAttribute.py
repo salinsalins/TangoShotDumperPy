@@ -1,70 +1,109 @@
+import io
+import logging
+
 from tango import AttrDataFormat
 
 from PrototypeDumperDevice import *
+from TangoDevice import TangoDevice
+from TangoUtils import TangoDeviceAttributeProperties
 
 
-class TangoAttribute(PrototypeDumperDevice):
-    def __init__(self, device_name, attribute_name, folder=None, force=True, **kwargs):
-        super().__init__(device_name, **kwargs)
+def average_aray(arr, avg):
+    if avg > 1:
+        n = len(arr)
+        m = n // avg
+        if m > 0:
+            y = arr[:(m*avg)]
+            return numpy.average(y.reshape((m, avg)), 1)
+        else:
+            return numpy.average(arr)
+    else:
+        return numpy.average(arr)
+
+
+class TangoAttribute():
+    def __init__(self, device_name, attribute_name, folder='', use_history=False):
+        self.device = TangoDevice(device_name)
+        self.logger = self.device.logger
+        self.active = False
+        self.error = None
         self.attribute_name = attribute_name
+        self.full_name = self.device.name + '/' + attribute_name
         self.folder = folder
-        self.force = force
-        # self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
-        # self.channel.logger = self.logger
-        self.full_name = self.device_name + '/' + attribute_name
+        self.use_history = use_history
+        self.attr = None
         self.value = None
         self.config = {}
         self.properties = {}
 
     def activate(self):
-        if self.active:
-            return self.active
-        if not super().activate():
+        if not self.device.activate():
             self.active = False
+            self.error = self.device.error
             return False
+        if self.active:
+            return True
         try:
-            #self.device.read_attribute(self.attribute_name)
-            if self.attribute_name not in self.device.get_attribute_list():
-                self.logger.error(f'{self.device_name} do not have attribute {self.attribute_name}')
+            if self.attribute_name not in self.device.device.get_attribute_list():
+                msg = f'{self.device.name} do not have attribute {self.attribute_name}'
+                self.logger.warning(msg)
                 self.active = False
+                self.error = Exception(msg)
                 return False
-            self.config = self.device.get_attribute_config_ex(self.attribute_name)
+            self.config = self.device.device.get_attribute_config_ex(self.attribute_name)[0]
             # self.logger.debug("config = %s", self.config)
             self.active = True
+            self.error = None
             return True
-        except:
+        except KeyboardInterrupt:
+            raise
+        except Exception as ex_value:
+            self.error =  ex_value
             self.active = False
-            log_exception('Error reading attribute')
+            log_exception(f'Error activating attribute {self.attribute_name}')
             return False
 
     def save(self, log_file, zip_file, folder=None):
+        if not self.active:
+            return
         if folder is None:
             folder = self.folder
-        db = tango.Database()
-        self.properties = db.get_device_attribute_property(self.device_name, self.attribute_name)[self.attribute_name]
-        self.save_properties(zip_file, folder)
-        self.value = self.device.read_attribute(self.attribute_name)
-        if self.channel.y is None:
-            print('    ', self.channel.file_name, '---- No data')
-            return
-        addition = {}
-        if self.channel.y_attr.data_format == AttrDataFormat.SCALAR:
-            # self.logger.debug("SCALAR attribute %s" % self.attribute_name)
-            if properties.get("history", [False])[0] != 'True':
-                addition = {'mark': self.channel.y}
-        self.channel.save_log(log_file, addition)
-        self.channel.save_data(zip_file, folder)
+        try:
+            self.properties = TangoDeviceAttributeProperties(self.device.name, self.attribute_name)()
+            self.attr = self.device.device.read_attribute(self.attribute_name)
+            self.value = self.attr.value
+            if self.value is None:
+                print('    ', self.attribute_name, ' ---- No data')
+                return
+            self.save_properties(zip_file, folder)
+            self.save_log(log_file)
+            self.save_data(zip_file, folder)
+        except:
+            print('    ', self.attribute_name, ' ERROR reading')
+            log_exception(f'Can not read attribute {self.full_name}', level=logging.DEBUG)
+
+    def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
+        if not folder.endswith('/'):
+            folder += '/'
+        zip_entry = folder + self.full_name + '_properties' + '.txt'
+        buf = b"Full_Name=%s\r\n" % self.full_name
+        for prop in self.properties:
+            buf += b'%s=%s\r\n' % (prop, self.properties[prop][0])
+        for prop in self.config:
+            buf += b'%s=%s\r\n' % (prop, self.config[prop])
+        zip_file.writestr(zip_entry, buf)
+        self.logger.debug('%s properties saved to %s', self.full_name, zip_entry)
+        return True
 
     def save_log(self, log_file: IO, additional_marks=None):
         if additional_marks is None:
             additional_marks = {}
-        self.read_properties()
-        # Signal label = default mark name
+        # label
         label = self.properties.get('label', [''])[0]
         if '' == label:
             label = self.properties.get('name', [''])[0]
         if '' == label:
-            label = self.file_name
+            label = self.full_name
         # Units
         unit = self.properties.get('unit', [''])[0]
         # coefficient for conversion to units
@@ -118,28 +157,42 @@ class TangoAttribute(PrototypeDumperDevice):
             print('    ', label, '---- no marks')
         self.logger.debug('%s Log Saved', self.file_name)
 
-    def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
-        if not folder.endswith('/'):
-            folder += '/'
-        zip_entry = folder + self.full_name + '_properties' + '.txt'
-        buf = "Attribute_Name=%s/\r\n" % self.full_name
-        for prop in self.properties:
-            buf += '%s=%s\r\n' % (prop, self.properties[prop][0])
-        zip_file.writestr(zip_entry, buf)
-        self.logger.debug('%s properties saved to %s', self.full_name, zip_entry)
-        return True
-
     def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
-        if self.y is None:
-            self.logger.debug('%s No data to save', self.file_name)
+        if self.value is None:
+            self.logger.debug('%s No data to save', self.full_name)
             return
         if not folder.endswith('/'):
             folder += '/'
-        zip_entry = folder + self.file_name + ".txt"
-        avg = int(self.read_properties().get("save_avg", ['1'])[0])
-        save_as_numpy = self.properties.get('save_as_numpy',['0'])[0] in PrototypeDumperDevice.TRUE_VALUES
-        outbuf = ''
+        zip_entry = folder + self.full_name + ".txt"
+        if self.value.data_format == AttrDataFormat.SCALAR:
+            pass
+        elif self.value.data_format == AttrDataFormat.SPECTRUM:
+            pass
+        elif self.value.data_format == AttrDataFormat.IMAGE:
+            pass
+        else:
+            self.logger.warning('Wrong data format for %s', self.full_name)
+            return
+        try:
+            avg = int(self.properties.get("save_avg", ['1'])[0])
+        except:
+            avg = 1
+
+        y = average_aray(self.value, avg)
+
+        try:
+            save_as_numpy = self.properties.get('save_as_numpy', ['0'])[0] in PrototypeDumperDevice.TRUE_VALUES
+        except:
+            save_as_numpy = False
+
         t0 = time.time()
+
+        bio = io.BytesIO()
+        numpy.savetxt(bio, y)
+        # outbuf = bio.getvalue()
+        outbuf = bio.getbuffer()
+
+        outbuf = ''
         if self.x is None:
             # save only y values
             fmt = '%f'
