@@ -78,8 +78,10 @@ class TangoAttribute():
             self.save_properties(zip_file, folder)
             self.save_log(log_file)
             self.save_data(zip_file, folder)
+        except KeyboardInterrupt:
+            raise
         except:
-            print('    ', self.attribute_name, ' ERROR reading')
+            print('    ', self.attribute_name, ' ---- read ERROR')
             log_exception(f'Can not read attribute {self.full_name}', level=logging.DEBUG)
 
     def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
@@ -89,8 +91,7 @@ class TangoAttribute():
         buf = b"Full_Name=%s\r\n" % self.full_name
         for prop in self.properties:
             buf += b'%s=%s\r\n' % (prop, self.properties[prop][0])
-        for prop in self.config:
-            buf += b'%s=%s\r\n' % (prop, self.config[prop])
+        # buf += b'%s=%s\r\n' % ('data_format', self.config.data_format)
         zip_file.writestr(zip_entry, buf)
         self.logger.debug('%s properties saved to %s', self.full_name, zip_entry)
         return True
