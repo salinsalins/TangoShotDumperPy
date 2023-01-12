@@ -10,15 +10,14 @@ from TangoUtils import TangoDeviceAttributeProperties
 
 def average_aray(arr, avg):
     if avg > 1:
-        n = len(arr)
-        m = n // avg
+        m = len(arr) // avg
         if m > 0:
             y = arr[:(m*avg)]
             return numpy.average(y.reshape((m, avg)), 1)
         else:
             return numpy.average(arr)
     else:
-        return numpy.average(arr)
+        return arr
 
 
 class TangoAttribute():
@@ -113,8 +112,14 @@ class TangoAttribute():
         except:
             coeff = 1.0
         # output data format
-        format = self.properties.get('format', ['%6.2f'])[0]
+        frmt = self.properties.get('format', ['%6.2f'])[0]
         # process marks
+        if self.attr.data_format == AttrDataFormat.SCALAR:
+            scaled_marks = {label: self.value}
+        elif self.attr.data_format == AttrDataFormat.SPECTRUM:
+            pass
+        elif self.attr.data_format == AttrDataFormat.IMAGE:
+            pass
         marks = self.mark_values()
         # Find zero value
         zero = marks.get('zero', 0.0)
@@ -132,31 +137,31 @@ class TangoAttribute():
                     mark_name = label
                 scaled_marks[mark_name] = (marks[mark] - zero) * coeff
         # print and save scaled_marks to log file
-        np = 0
-        for mark in scaled_marks:
+        out_str = self.print_marks(scaled_marks, unit, frmt)
+        if out_str:
+            log_file.write(out_str)
+        else:
+            print('    ', label, '---- no marks')
+        # self.logger.debug('%s Log Saved', self.full_name)
+
+    def print_marks(self, marks, unit='', frmt='%6.2f'):
+        out_str = ''
+        for mark in marks:
             print("    ", end='')
-            # printed mark name
-            pmn = mark
-            mark_value = scaled_marks[mark]
-            # if len(mark) > 14:
-            #     pmn = mark[:5] + '...' + mark[-6:]
+            mark_value = marks[mark]
             # print mark value
             if abs(mark_value) >= 1000.0:
-                print("%14s = %7.0f %s\r\n" % (pmn, mark_value, unit), end='')
+                print("%14s = %7.0f %s\r\n" % (mark, mark_value, unit), end='')
             elif abs(mark_value) >= 100.0:
-                print("%14s = %7.1f %s\r\n" % (pmn, mark_value, unit), end='')
+                print("%14s = %7.1f %s\r\n" % (mark, mark_value, unit), end='')
             elif abs(mark_value) >= 10.0:
-                print("%14s = %7.2f %s\r\n" % (pmn, mark_value, unit), end='')
+                print("%14s = %7.2f %s\r\n" % (mark, mark_value, unit), end='')
             else:
-                print("%14s = %7.3f %s\r\n" % (pmn, mark_value, unit), end='')
-            out_str = ("; %s = " % mark) + (format % mark_value)
-            if unit != '':
+                print("%14s = %7.3f %s\r\n" % (mark, mark_value, unit), end='')
+            out_str += ("; %s = %s" % (mark, (frmt % mark_value)))
+            if unit:
                 out_str += (" %s" % unit)
-            log_file.write(out_str)
-            np += 1
-        if np == 0:
-            print('    ', label, '---- no marks')
-        self.logger.debug('%s Log Saved', self.file_name)
+        return out_str
 
     def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
         if self.value is None:
