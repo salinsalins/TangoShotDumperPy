@@ -1,3 +1,7 @@
+import logging
+
+from tango import AttrQuality
+
 from PrototypeDumperDevice import *
 
 
@@ -17,13 +21,15 @@ class AdlinkADC(PrototypeDumperDevice):
             return -1
 
     def read_shot_time(self):
+        t0 = time.time()
         try:
-            t0 = time.time()
             elapsed = self.device.read_attribute('Elapsed')
-            if elapsed.quality != tango._tango.AttrQuality.ATTR_VALID:
+            if elapsed.quality != AttrQuality.ATTR_VALID:
                 return -t0
             self.shot_time = t0 - elapsed.value
             return self.shot_time
+        except KeyboardInterrupt:
+            raise
         except:
             return -t0
 
@@ -73,9 +79,7 @@ class AdlinkADC(PrototypeDumperDevice):
                             data_saved = True
                         break
                     except:
-                        log_exception("%s channel save exception", self.name)
+                        log_exception("%s channel save exception", self.name, level=logging.WARNING)
                         retry_count -= 1
-                    if retry_count > 0:
-                        self.logger.debug("Retries reading %s" % self.name)
                     if retry_count == 0:
                         self.logger.warning("Error reading %s" % self.name)

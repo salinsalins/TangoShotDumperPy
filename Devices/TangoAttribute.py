@@ -31,7 +31,9 @@ class TangoAttribute(PrototypeDumperDevice):
             #     self.active = False
             #     return False
             self.active = True
-            return self.active
+            return True
+        except KeyboardInterrupt:
+            raise
         except:
             self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
             self.active = False
