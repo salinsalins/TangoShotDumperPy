@@ -2,7 +2,7 @@ from PrototypeDumperDevice import *
 
 
 class TangoAttribute(PrototypeDumperDevice):
-    def __init__(self, device_name, attribute_name, folder=None, force=True, **kwargs):
+    def __init__(self, device_name, attribute_name, folder='', force=True, **kwargs):
         self.attribute_name = attribute_name
         super().__init__(device_name, **kwargs)
         self.folder = folder
@@ -10,6 +10,7 @@ class TangoAttribute(PrototypeDumperDevice):
         self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
         self.channel.logger = self.logger
         self.full_name = self.name + '/' + attribute_name
+        self.config = None
 
     def activate(self):
         if self.active:
@@ -23,8 +24,7 @@ class TangoAttribute(PrototypeDumperDevice):
         try:
             if hasattr(self, 'channel'):
                 self.channel.device = self.device
-            ai = self.device.get_attribute_config_ex(self.attribute_name)
-            self.logger.debug("AI %s", ai)
+            self.config = self.device.get_attribute_config_ex(self.attribute_name)
             #self.device.read_attribute(self.attribute_name)
             # if self.active and self.attribute_name not in self.device.get_attribute_list():
             #     self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')

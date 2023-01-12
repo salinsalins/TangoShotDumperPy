@@ -8,7 +8,6 @@ A. L. Sanin, started 07.09.2021
 import datetime
 import logging
 import os
-import runpy
 import sys
 import time
 import zipfile
@@ -24,7 +23,7 @@ for filename in os.listdir(folder_name):
     # Process all python files in a directory that don't start
     # with underscore (which also prevents this module from
     # importing itself).
-    if filename[0] == '_':
+    if filename.startswith('_'):
         continue
     fns = filename.split('.')
     if fns[-1] in ('py', 'pyw'):
@@ -115,7 +114,7 @@ class TangoShotDumper:
                         else:
                             self.device_groups[item.name][item.full_name] = item
                             self.dumper_items.append(item)
-                        self.logger.info("%s has been added" % item.full_name)
+                            self.logger.info("%s has been added" % item.full_name)
                     else:
                         self.logger.info("No 'eval' option for %s" % device)
                 except:
@@ -126,6 +125,8 @@ class TangoShotDumper:
             else:
                 self.logger.warning('No dumper devices has been configured')
                 return False
+        except KeyboardInterrupt:
+            raise
         except:
             log_exception(self, 'Configuration set error for %s', file_name, level=logging.WARNING)
             return False
@@ -145,6 +146,8 @@ class TangoShotDumper:
             try:
                 if item.activate():
                     n += 1
+            except KeyboardInterrupt:
+                raise
             except:
                 log_exception(self, "%s activation error", item.name)
         return n
@@ -157,6 +160,8 @@ class TangoShotDumper:
                     self.shot_number_value += 1
                     self.write_shot_number(self.shot_number_value)
                     return True
+            except KeyboardInterrupt:
+                raise
             except:
                 log_exception(self, "Error checking new shot for %s", item.name)
         return False
@@ -258,6 +263,8 @@ class TangoShotDumper:
                         try:
                             item.save(self.log_file, self.zip_file)
                             count += 1
+                        except KeyboardInterrupt:
+                            raise
                         except:
                             log_exception(self, "Exception saving %s", str(item))
                 if count == 0:
