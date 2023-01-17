@@ -51,5 +51,4 @@ class PicoLog1000(PrototypeDumperDevice):
                 if sdf:
                     chan.save_data(zip_file, self.folder)
             except:
-                self.logger.warning("%s save exception" % self.name)
-                self.logger.debug('', exc_info=True)
+                log_exception("%s save exception" % self.name)
