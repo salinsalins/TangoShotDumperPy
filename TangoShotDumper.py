@@ -117,6 +117,8 @@ class TangoShotDumper:
                             self.logger.info("%s has been added" % item.full_name)
                     else:
                         self.logger.info("No 'eval' option for %s" % device)
+                except KeyboardInterrupt:
+                    raise
                 except:
                     log_exception(self, "Device creation error for %s", str(device), level=logging.WARNING)
             if len(self.dumper_items) > 0:
@@ -136,6 +138,8 @@ class TangoShotDumper:
             self.config.write(file_name)
             self.logger.debug('Configuration saved to %s', self.config.file_name)
             return True
+        except KeyboardInterrupt:
+            raise
         except:
             log_exception(self, 'Configuration save error to %s', file_name)
             return False
@@ -190,6 +194,8 @@ class TangoShotDumper:
                 self.logger.debug("Output folder %s has been created", of)
             self.out_dir = of
             return True
+        except KeyboardInterrupt:
+            raise
         except:
             self.logger.warning("Can not create output folder %s", of)
             self.out_dir = None
@@ -255,6 +261,7 @@ class TangoShotDumper:
             self.zip_file = self.open_zip_file(self.out_dir)
             # for item in self.dumper_items:
             for device in self.device_groups:
+                t0 = time.time()
                 print("Saving from %s" % device)
                 count = 0
                 for item_name in self.device_groups[device]:
@@ -269,6 +276,7 @@ class TangoShotDumper:
                             log_exception(self, "Exception saving %s", str(item))
                 if count == 0:
                     print('    ** No active attributes **')
+                self.logger.debug(f'Total time {(time.time() - t0) * 1000:.1f} ms')
             zfn = os.path.basename(self.zip_file.filename)
             self.zip_file.close()
             self.log_file.write('; File=%s\n' % zfn)

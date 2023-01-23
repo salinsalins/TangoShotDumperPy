@@ -1,7 +1,7 @@
 from PrototypeDumperDevice import *
 
 
-class PicoLog1000(PrototypeDumperDevice):
+class PicoLog1000Rearm(PrototypeDumperDevice):
 
     def activate(self):
         record_in_progress = self.device.read_attribute('record_in_progress').value
