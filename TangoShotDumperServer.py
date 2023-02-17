@@ -89,7 +89,6 @@ def looping():
         dt = time.time() - t0
         if dt < dev.config['sleep']:
             time.sleep(dev.config['sleep'] - dt)
-        t0 = time.time()
         try:
             dev.process()
             # msg = '%s processed' % dev.name
