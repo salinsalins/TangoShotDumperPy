@@ -71,13 +71,15 @@ class TangoShotDumperServer(TangoServerPrototype, TangoShotDumper):
             except:
                 value = 0.0
             self.write_shot_time(value)
-            # init ShortDumper part
-            TangoShotDumper.__init__(self, self.config.file_name)
-            # set_config for TangoShotDumper part
-            TangoShotDumper.set_config(self)
+            # init TangoServerPrototyper part
+            TangoServerPrototype.__init__(self, self.config.file_name)
+            # set_config for TangoServerPrototype part
+            TangoServerPrototype.set_config(self)
+            self.set_state(DevState.RUNNING)
             return True
         except:
             log_exception('Configuration set error for %s', self.config.file_name)
+            self.set_state(DevState.FAULT)
             return False
 
 
