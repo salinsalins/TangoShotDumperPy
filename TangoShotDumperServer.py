@@ -24,7 +24,7 @@ from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
 
 
-class TangoShotDumperServer(TangoServerPrototype, TangoShotDumper):
+class TangoShotDumperServer(TangoServerPrototype):
     server_version_value = '2.0'
     server_name_value = 'Tango Shot Dumper Server'
 
@@ -55,9 +55,8 @@ class TangoShotDumperServer(TangoServerPrototype, TangoShotDumper):
     def set_config(self):
         try:
             # set_config for TangoServerPrototype part
-            TangoServerPrototype.set_config(self)
+            super().set_config(self)
             # set shot_number and short time from DB
-            db = self.device_proxy.get_device_db()
             try:
                 pr = self.get_attribute_property('shot_number', '__value')
                 value = int(pr)
@@ -66,17 +65,20 @@ class TangoShotDumperServer(TangoServerPrototype, TangoShotDumper):
             self.write_shot_number(value)
             # set shot_time
             try:
-                pr = db.get_device_attribute_property(self.get_name(), 'shot_time')
-                value = float(pr['shot_time']['__value'][0])
+                pr = self.get_attribute_property('shot_time', '__value')
+                value = float(pr)
             except:
                 value = 0.0
             self.write_shot_time(value)
-            # init TangoServerPrototyper part
-            TangoServerPrototype.__init__(self, self.config.file_name)
-            # set_config for TangoServerPrototype part
-            TangoServerPrototype.set_config(self)
-            self.set_state(DevState.RUNNING)
-            return True
+            # init TangoShotDumper part
+            self.dumper = TangoShotDumper(self.config.file_name)
+            # set_config for TangoShotDumper part
+            if self.dumper.set_config():
+                self.set_state(DevState.RUNNING)
+                return True
+            else:
+                self.set_state(DevState.FAULT)
+                return False
         except:
             log_exception('Configuration set error for %s', self.config.file_name)
             self.set_state(DevState.FAULT)
@@ -90,7 +92,8 @@ def looping():
         if dt < dev.config['sleep']:
             time.sleep(dev.config['sleep'] - dt)
         try:
-            dev.process()
+            if dev.get_state() == DevState.RUNNING:
+                dev.dumper.process()
             # msg = '%s processed' % dev.name
             # dev.logger.debug(msg)
             # dev.debug_stream(msg)
