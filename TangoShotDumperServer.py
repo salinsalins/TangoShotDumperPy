@@ -56,7 +56,7 @@ class TangoShotDumperServer(TangoServerPrototype):
     def set_config(self):
         try:
             # set_config for TangoServerPrototype part
-            super().set_config(self)
+            super().set_config()
             # set shot_number and short time from DB
             try:
                 pr = self.get_attribute_property('shot_number', '__value')
