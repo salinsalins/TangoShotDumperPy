@@ -15,8 +15,10 @@ class AdlinkADC(PrototypeDumperDevice):
 
     def read_shot(self):
         try:
-            shot = self.device.read_attribute("Shot_id").value
-            return shot
+            shot = self.device.read_attribute("Shot_id")
+            if shot.quality != AttrQuality.ATTR_VALID:
+                return -1
+            return shot.value
         except:
             return -1
 

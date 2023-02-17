@@ -19,6 +19,7 @@ from tango.server import Device, attribute, command, pipe, device_property
 
 from TangoServerPrototype import TangoServerPrototype
 from TangoShotDumper import TangoShotDumper
+
 sys.path.append('../TangoUtils')
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
@@ -43,7 +44,7 @@ class TangoShotDumperServer(TangoServerPrototype):
     def init_device(self):
         # init base class TangoServerPrototype self.set_config() will be called insight
         TangoServerPrototype.init_device(self)
-        if self.get_state() ==  DevState.RUNNING:
+        if self.get_state() == DevState.RUNNING:
             # add to servers list
             if self not in TangoShotDumperServer.device_list:
                 TangoShotDumperServer.device_list.append(self)
@@ -83,6 +84,18 @@ class TangoShotDumperServer(TangoServerPrototype):
             log_exception('Configuration set error for %s', self.config.file_name)
             self.set_state(DevState.FAULT)
             return False
+
+    # def write_shot_time(self, value):
+    #     self.dumper.write_shot_time(value)
+
+    def read_shot_time(self):
+        return self.dumper.read_shot_time()
+
+    # def write_shot_number(self, value):
+    #     self.dumper.write_shot_number(value)
+
+    def read_shot_number(self):
+        return self.dumper.read_shot_number()
 
 
 def looping():
