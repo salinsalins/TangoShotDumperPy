@@ -273,12 +273,13 @@ class PrototypeDumperDevice:
             try:
                 self.device = tango.DeviceProxy(self.name)
                 self.active = True
-                self.logger.debug("%s has been activated", self.full_name)
+                # ping = self.device.ping()
+                self.logger.debug("Device %s has been activated", self.name)
                 return True
             except ConnectionFailed as e:
                 self.device = None
                 self.active = False
-                log_exception("%s connection error: ", self.full_name)
+                log_exception("%s connection failed ", self.name)
                 # self.reactivate = False
                 # self.logger.error('Dumper restart required to activate %s', self.name)
             except DevFailed as ex_value:
@@ -288,7 +289,7 @@ class PrototypeDumperDevice:
                     self.device = None
                     self.reactivate = False
                 else:
-                    log_exception("%s activation error: ", self.full_name)
+                    log_exception("%s activation error ", self.full_name)
             except:
                 self.device = None
                 self.active = False

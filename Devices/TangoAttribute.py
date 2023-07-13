@@ -31,13 +31,14 @@ class TangoAttribute(PrototypeDumperDevice):
             #     self.active = False
             #     return False
             self.active = True
+            self.logger.debug("%s has been activated", self.full_name)
             return True
         except KeyboardInterrupt:
             raise
         except:
             self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
             self.active = False
-            log_exception('Error reading attribute')
+            log_exception('Error activating attribute')
             return self.active
 
     def save(self, log_file, zip_file, folder=None):
@@ -63,7 +64,8 @@ class TangoAttribute(PrototypeDumperDevice):
         if self.channel.y_attr.data_format == tango._tango.AttrDataFormat.IMAGE:
             self.channel.x = self.channel.y_attr.value[:, 0]
             self.channel.y = self.channel.y_attr.value[:, 1]
-        elif self.channel.y_attr.data_format != tango._tango.AttrDataFormat.SCALAR:
+            self.logger.warning('Only two first columns will be saved for IMAGE attribute %s', self.full_name)
+        elif self.channel.y_attr.data_format == tango._tango.AttrDataFormat.SPECTRUM:
             self.channel.read_x()
 
 
