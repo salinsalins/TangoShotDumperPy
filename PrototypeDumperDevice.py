@@ -1,3 +1,4 @@
+import io
 import sys
 import time
 import logging
@@ -18,8 +19,8 @@ class PrototypeDumperDevice:
     FALSE_VALUES = ('false', 'off', '0', 'n', 'no')
 
     class Channel:
-        def __init__(self, device, channel, prefix='chany', format_n='%03i'):
-            self.logger = config_logger()
+        def __init__(self, device, channel, prefix='chany', format_n='%03i', **kwargs):
+            self.logger = kwargs.get('logger', config_logger())
             self.device = device
             if isinstance(channel, int):
                 self.name = prefix + (format_n % channel)
@@ -159,7 +160,7 @@ class PrototypeDumperDevice:
                 else:
                     print("%14s = %7.3f %s\r\n" % (pmn, mark_value, unit), end='')
                 out_str = ("; %s = " % mark) + (format % mark_value)
-                if unit != '':
+                if unit != '' and unit != 'None' and unit != 'none':
                     out_str += (" %s" % unit)
                 log_file.write(out_str)
                 np += 1
@@ -180,16 +181,19 @@ class PrototypeDumperDevice:
             return True
 
         def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
+            t0 = time.time()
             if self.y is None:
                 self.logger.debug('%s No data to save', self.file_name)
                 return
             if not folder.endswith('/'):
                 folder += '/'
             zip_entry = folder + self.file_name + ".txt"
-            avg = int(self.read_properties().get("save_avg", ['1'])[0])
+            try:
+                avg = int(self.read_properties().get("save_avg", ['1'])[0])
+            except:
+                avg = 1
             save_as_numpy = self.properties.get('save_as_numpy',['0'])[0] in PrototypeDumperDevice.TRUE_VALUES
             outbuf = ''
-            t0 = time.time()
             if self.x is None:
                 # save only y values
                 fmt = '%f'
@@ -224,6 +228,8 @@ class PrototypeDumperDevice:
                 # ynps = self.y[:n-r].reshape((d, avg)).mean(1)
                 # xnps = self.x[:n-r].reshape((d, avg)).mean(1)
                 # z = numpy.vstack((xnps, ynps)).T
+                # buf = io.BytesIO()
+                # numpy.save(buf, self.y)
                 xs = 0.0
                 ys = 0.0
                 ns = 0.0
@@ -242,12 +248,9 @@ class PrototypeDumperDevice:
                 ns += 1.0
                 s = fmt % (xs / ns, ys / ns)
                 outbuf += s.replace(",", ".")
-            # self.logger.debug('dT = %s', time.time() - t0)
             zip_file.writestr(zip_entry, outbuf)
-            # self.logger.debug('dT = %s', time.time() - t0)
             # zip_file.writestr(zip_entry.replace('.txt', '.npy'), z.tobytes())
-            # self.logger.debug('dT = %s', time.time() - t0)
-            self.logger.debug('%s Data saved to %s', self.file_name, zip_entry)
+            self.logger.debug('%s Data saved to %s, total%ss', self.file_name, zip_entry, time.time() - t0)
 
     def __init__(self, device_name: str, reactivate: bool = True):
         self.logger = config_logger()
