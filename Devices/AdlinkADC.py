@@ -49,7 +49,7 @@ class AdlinkADC(PrototypeDumperDevice):
             folder = self.folder
         attributes = self.device.get_attribute_list()
         for attr in attributes:
-            if attr.startswith("chany"):
+            if "chany" in attr:
                 channel = PrototypeDumperDevice.Channel(self.device, attr)
                 channel.logger = self.logger
                 properties = channel.read_properties()
@@ -79,9 +79,10 @@ class AdlinkADC(PrototypeDumperDevice):
                         if sdf and not data_saved:
                             channel.save_data(zip_file, folder)
                             data_saved = True
-                        break
+                        return
                     except:
                         log_exception("%s channel save exception", self.name, level=logging.WARNING)
                         retry_count -= 1
                     if retry_count == 0:
                         self.logger.warning("Error reading %s" % self.name)
+                        return

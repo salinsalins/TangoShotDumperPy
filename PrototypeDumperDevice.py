@@ -1,4 +1,5 @@
 import io
+import json
 import sys
 import time
 import logging
@@ -61,6 +62,7 @@ class PrototypeDumperDevice:
             try:
                 db = self.device.get_device_db()
                 self.properties = db.get_device_attribute_property(self.device.name(), self.name)[self.name]
+                # self.config = json.loads(str(self.device.get_attribute_config_ex(self.name)))
             except:
                 self.properties = {}
             return self.properties
