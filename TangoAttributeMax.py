@@ -11,6 +11,8 @@ class TangoAttributeMax(TangoAttributeHistory):
         self.channel.properties['history'] =['False']
         self.channel.properties['max'] = ['True']
         if self.channel.y is not None:
-            self.channel.y = numpy.max(self.channel.y)
-            self.channel.properties['delta_t'] =[str(numpy.ptp(self.channel.x))]
+            index = numpy.argmax(self.channel.y)
+            self.channel.y = self.channel.y[index]
+            # self.channel.y_attr = self.channel.y_attr[index]
+            self.channel.properties['delta_t'] = [str(numpy.ptp(self.channel.x))]
             self.channel.x = None

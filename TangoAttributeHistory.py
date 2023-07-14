@@ -16,9 +16,9 @@ class TangoAttributeHistory(TangoAttribute):
         self.channel.y = None
         self.channel.x = None
         self.channel.file_name = self.channel.name + '_history'
-        self.channel.properties['history'] =['True']
+        self.channel.properties['history'] = ['True']
         if not self.channel.y_attr.data_format == tango._tango.AttrDataFormat.SCALAR:
-            self.logger.info("History of non SCALAR attribute %s" % self.channel.name)
+            self.logger.info("History of non SCALAR attribute %s is not supported" % self.channel.name)
             return
         period = self.device.get_attribute_poll_period(self.channel.name)
         if period <= 0:

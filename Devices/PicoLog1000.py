@@ -10,13 +10,15 @@ class PicoLog1000(PrototypeDumperDevice):
         # read data ready
         data_ready = self.device.read_attribute('data_ready').value
         if not data_ready:
-            self.logger.warning("%s is not ready" % self.name)
+            self.logger.warning("%s data is not ready" % self.name)
             return
         # read channels list
         channels = self.device.read_attribute('channels').value
         channels_list = []
         try:
             channels_list = eval(channels)
+        except KeyboardInterrupt:
+            raise
         except:
             pass
         if len(channels_list) <= 0:
