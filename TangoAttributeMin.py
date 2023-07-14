@@ -7,7 +7,7 @@ class TangoAttributeMin(TangoAttributeHistory):
 
     def read_attribute(self):
         super().read_attribute()
-        self.channel.file_name = self.channel.name + '_min'
+        self.channel.file_name = self.channel.device_name + '_min'
         self.channel.properties['history'] =['False']
         self.channel.properties['min'] =['True']
         if self.channel.y is not None:

@@ -5,11 +5,14 @@ class TangoAttribute(PrototypeDumperDevice):
     def __init__(self, device_name, attribute_name, folder='', force=True, **kwargs):
         self.attribute_name = attribute_name
         super().__init__(device_name, **kwargs)
-        self.folder = folder
+        if not folder:
+            self.folder = device_name.replace('\\', '_').replace('/', '_')
+        else:
+            self.folder = folder
         self.force = force
         self.channel = PrototypeDumperDevice.Channel(self.device, attribute_name)
         self.channel.logger = self.logger
-        self.full_name = self.name + '/' + attribute_name
+        self.full_name = self.device_name + '/' + attribute_name
         self.config = None
 
     def activate(self):
@@ -27,7 +30,7 @@ class TangoAttribute(PrototypeDumperDevice):
             self.config = self.device.get_attribute_config_ex(self.attribute_name)
             #self.device.read_attribute(self.attribute_name)
             # if self.active and self.attribute_name not in self.device.get_attribute_list():
-            #     self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
+            #     self.logger.error(f'{self.device_name} do not have attribute {self.attribute_name}')
             #     self.active = False
             #     return False
             self.active = True
@@ -36,7 +39,7 @@ class TangoAttribute(PrototypeDumperDevice):
         except KeyboardInterrupt:
             raise
         except:
-            self.logger.error(f'{self.name} do not have attribute {self.attribute_name}')
+            self.logger.error(f'{self.device_name} do not have attribute {self.attribute_name}')
             self.active = False
             log_exception('Error activating attribute')
             return self.active

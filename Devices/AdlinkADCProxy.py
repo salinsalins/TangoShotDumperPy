@@ -41,7 +41,7 @@ class AdlinkADCProxy(AdlinkADC):
                         data_saved = True
                     break
                 except:
-                    log_exception("%s channel save exception", self.name, level=logging.WARNING)
+                    log_exception("%s channel save exception", self.device_name, level=logging.WARNING)
                     retry_count -= 1
                 if retry_count == 0:
-                    self.logger.warning("Error reading %s" % self.name)
+                    self.logger.warning("Error reading %s" % self.device_name)

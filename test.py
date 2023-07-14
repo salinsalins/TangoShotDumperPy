@@ -249,7 +249,7 @@ d.hi()
 import tango
 
 name = 'sys/test/1'
-# name = 'sys/tg_test/1'
+# device_name = 'sys/tg_test/1'
 attr = 'double_scalar'
 
 t00 = time.time()

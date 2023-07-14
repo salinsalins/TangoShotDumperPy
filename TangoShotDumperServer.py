@@ -107,7 +107,7 @@ def looping():
         try:
             if dev.get_state() == DevState.RUNNING:
                 dev.dumper.process()
-            # msg = '%s processed' % dev.name
+            # msg = '%s processed' % dev.device_name
             # dev.logger.debug(msg)
             # dev.debug_stream(msg)
         except:

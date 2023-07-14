@@ -15,20 +15,20 @@ class TangoAttributeHistory(TangoAttribute):
         self.channel.read_y()
         self.channel.y = None
         self.channel.x = None
-        self.channel.file_name = self.channel.name + '_history'
+        self.channel.file_name = self.channel.device_name + '_history'
         self.channel.properties['history'] = ['True']
         if not self.channel.y_attr.data_format == tango._tango.AttrDataFormat.SCALAR:
-            self.logger.info("History of non SCALAR attribute %s is not supported" % self.channel.name)
+            self.logger.info("History of non SCALAR attribute %s is not supported" % self.channel.device_name)
             return
-        period = self.device.get_attribute_poll_period(self.channel.name)
+        period = self.device.get_attribute_poll_period(self.channel.device_name)
         if period <= 0:
-            self.logger.info("Attribute %s is not polled" % self.channel.name)
+            self.logger.info("Attribute %s is not polled" % self.channel.device_name)
             return
         m = int(self.delta_t * 1000.0 / period + 10)
-        history = self.device.attribute_history(self.channel.name, m)
+        history = self.device.attribute_history(self.channel.device_name, m)
         n = len(history)
         if n <= 0:
-            self.logger.info("Empty history for %s" % self.channel.name)
+            self.logger.info("Empty history for %s" % self.channel.device_name)
             return
         y = numpy.zeros(n)
         x = numpy.zeros(n)
@@ -40,7 +40,7 @@ class TangoAttributeHistory(TangoAttribute):
                 x[i] = h.time.totime()
         index = numpy.logical_and(y != numpy.nan, x > (time.time() - self.delta_t))
         if len(y[index]) <= 0:
-            self.logger.info("%s No values for %f seconds in history", self.channel.name, self.delta_t)
+            self.logger.info("%s No values for %f seconds in history", self.channel.device_name, self.delta_t)
             return
         self.channel.y = y[index]
         self.channel.x = x[index]

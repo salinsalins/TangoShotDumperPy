@@ -18,6 +18,7 @@ from log_exception import log_exception
 class PrototypeDumperDevice:
     TRUE_VALUES = ('true', 'on', '1', 'y', 'yes')
     FALSE_VALUES = ('false', 'off', '0', 'n', 'no')
+    devices = {}
 
     class Channel:
         def __init__(self, device, channel, prefix='chany', format_n='%03i', **kwargs):
@@ -32,7 +33,7 @@ class PrototypeDumperDevice:
             self.y_attr = None
             self.x = None
             self.x_attr = None
-            self.properties = None
+            self.properties = {}
 
         def read_y(self):
             self.y_attr = self.device.read_attribute(self.name)
@@ -57,7 +58,7 @@ class PrototypeDumperDevice:
 
         def read_properties(self, force=False):
             # returns dictionary with attribute properties for channel attribute
-            if self.properties is not None and not force:
+            if len(self.properties) == 0 and not force:
                 return self.properties
             try:
                 db = self.device.get_device_db()
@@ -252,17 +253,19 @@ class PrototypeDumperDevice:
                 outbuf += s.replace(",", ".")
             zip_file.writestr(zip_entry, outbuf)
             # zip_file.writestr(zip_entry.replace('.txt', '.npy'), z.tobytes())
-            self.logger.debug('%s Data saved to %s, total%ss', self.file_name, zip_entry, time.time() - t0)
+            self.logger.debug('%s Data saved to %s, total %ss', self.file_name, zip_entry, time.time() - t0)
 
-    def __init__(self, device_name: str, reactivate: bool = True):
+    def __init__(self, device_name: str, reactivate: bool = True, **kwargs):
         self.logger = config_logger()
-        self.name = device_name
+        self.device_name = device_name
+        self.kwargs = kwargs
         self.active = False
         self.device = None
         self.time = 0.0
         self.activation_timeout = 10.0
         self.reactivate = reactivate
-        self.full_name = self.name
+        self.full_name = self.device_name
+        self.properties = {}
         self.activate()
 
     def new_shot(self):
@@ -271,26 +274,33 @@ class PrototypeDumperDevice:
     def activate(self):
         if self.active:
             return True
+        if self.device_name in self.devices:
+            self.active = True
+            self.device = self.devices[self.device_name]
+            self.logger.debug("Reusing device %s", self.device_name)
+            return True
         if self.device is None and (time.time() - self.time) < self.activation_timeout:
+            self.logger.debug("%s activation timeout", self.device_name)
             return False
-        self.time = time.time()
         if self.device is None and self.reactivate:
             try:
-                self.device = tango.DeviceProxy(self.name)
+                self.time = time.time()
+                self.device = tango.DeviceProxy(self.device_name)
                 self.active = True
+                self.devices[self.device_name] = self.device
                 # ping = self.device.ping()
-                self.logger.debug("Device %s has been activated", self.name)
+                self.logger.debug("Device %s has been activated", self.device_name)
                 return True
-            except ConnectionFailed as e:
+            except ConnectionFailed:
                 self.device = None
                 self.active = False
-                log_exception("%s connection failed ", self.name)
+                log_exception("%s connection failed ", self.device_name)
                 # self.reactivate = False
-                # self.logger.error('Dumper restart required to activate %s', self.name)
+                # self.logger.error('Dumper restart required to activate %s', self.device_name)
             except DevFailed as ex_value:
                 self.active = False
                 if 'DeviceNotDefined' in ex_value.args[0].reason:
-                    self.logger.error('Device %s is not defined in DB. Restart dumper to reactivate', self.name)
+                    self.logger.error('Device %s is not defined in DB. Dumper restart required to reactivate', self.device_name)
                     self.device = None
                     self.reactivate = False
                 else:

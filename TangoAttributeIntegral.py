@@ -7,7 +7,7 @@ class TangoAttributeIntegral(TangoAttributeHistory):
 
     def read_attribute(self):
         super().read_attribute()
-        self.channel.file_name = self.channel.name + '_integral'
+        self.channel.file_name = self.channel.device_name + '_integral'
         self.channel.properties['history'] =['False']
         self.channel.properties['integral'] =['True']
         if self.channel.y is not None:

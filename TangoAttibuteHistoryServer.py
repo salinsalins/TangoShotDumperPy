@@ -23,7 +23,7 @@ from TangoServerPrototype import TangoServerPrototype, Configuration
 EMPTY_HISTORY = numpy.empty((0, 2))
 SERVER_CONFIG = ('log_level', 'config_file')
 DEFAULT_ATTRIB_CONFIG = {'ready': False, 'attribute': None, 'device_proxy': None,
-                         'local_name': None, 'name': None}
+                         'local_name': None, 'device_name': None}
 
 
 class TangoAttributeHistoryServer(TangoServerPrototype):
@@ -120,7 +120,7 @@ class TangoAttributeHistoryServer(TangoServerPrototype):
             return self.attributes[local_name]
         conf = DEFAULT_ATTRIB_CONFIG
         conf['local_name'] = local_name
-        conf['name'] = name
+        conf['device_name'] = name
         if param is not None:
             for p in param:
                 conf[p] = param[p]
@@ -150,7 +150,7 @@ class TangoAttributeHistoryServer(TangoServerPrototype):
             if not d_p.ready:
                 self.logger.warning('Device is not ready for %s', name)
                 return conf
-            # self.logger.debug('Device is ready for %s', name)
+            # self.logger.debug('Device is ready for %s', device_name)
             # check if remote attribute exists
             try:
                 d_p.read_attribute(a_n)
@@ -172,7 +172,7 @@ class TangoAttributeHistoryServer(TangoServerPrototype):
             if period <= 5:
                 self.logger.warning('Polling can not be enabled for %s', name)
                 return conf
-            # self.logger.debug('Polling has been restarted for %s', name)
+            # self.logger.debug('Polling has been restarted for %s', device_name)
             p_s = self.convert_polling_status(d_p.polling_status(), a_n)
             depth = p_s['depth']
             conf['depth'] = depth
@@ -184,7 +184,7 @@ class TangoAttributeHistoryServer(TangoServerPrototype):
             if n > depth:
                 self.logger.warning('Not enough polling depth %s s for %s', depth * period / 1000.0, name)
             conf['ready'] = True
-            # self.logger.info('Attribute for %s has been configured', name)
+            # self.logger.info('Attribute for %s has been configured', device_name)
         except:
             self.log_exception('Attribute config exception for %s' % name)
             conf['ready'] = False
@@ -215,7 +215,7 @@ class TangoAttributeHistoryServer(TangoServerPrototype):
         # add attr to device
         self.add_attribute(attr)
         conf['attribute'] = attr
-        self.logger.debug('History attribute for %s has been created', conf['name'])
+        self.logger.debug('History attribute for %s has been created', conf['device_name'])
         return True
 
     def create_all_attributes(self):

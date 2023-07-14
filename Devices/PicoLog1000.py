@@ -10,7 +10,7 @@ class PicoLog1000(PrototypeDumperDevice):
         # read data ready
         data_ready = self.device.read_attribute('data_ready').value
         if not data_ready:
-            self.logger.warning("%s data is not ready" % self.name)
+            self.logger.warning("%s data is not ready" % self.device_name)
             return
         # read channels list
         channels = self.device.read_attribute('channels').value
@@ -22,7 +22,7 @@ class PicoLog1000(PrototypeDumperDevice):
         except:
             pass
         if len(channels_list) <= 0:
-            self.logger.warning("%s empty channels list" % self.name)
+            self.logger.warning("%s empty channels list" % self.device_name)
             return
         # read other attributes
         trigger = self.device.read_attribute('trigger').value
@@ -53,4 +53,4 @@ class PicoLog1000(PrototypeDumperDevice):
                 if sdf:
                     chan.save_data(zip_file, self.folder)
             except:
-                log_exception("%s save exception" % self.name)
+                log_exception("%s save exception" % self.device_name)

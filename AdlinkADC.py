@@ -73,9 +73,9 @@ class AdlinkADC(PrototypeDumperDevice):
                             data_saved = True
                         break
                     except:
-                        log_exception("%s channel save exception", self.name)
+                        log_exception("%s channel save exception", self.device_name)
                         retry_count -= 1
                     if retry_count > 0:
-                        self.logger.debug("Retries reading %s" % self.name)
+                        self.logger.debug("Retries reading %s" % self.device_name)
                     if retry_count == 0:
-                        self.logger.warning("Error reading %s" % self.name)
+                        self.logger.warning("Error reading %s" % self.device_name)

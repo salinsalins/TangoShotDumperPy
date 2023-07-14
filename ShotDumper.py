@@ -130,7 +130,7 @@ class TestDevice:
             entry = "TestDev/chanTestDev_%d.txt"%self.n
             zip_file.writestr(entry, buf)
             entry = "TestDev/paramchanTestDev_%d.txt"%self.n
-            zip_file.writestr(entry, "name=TestDev_%d\r\nxlabel=Point number"%self.n)
+            zip_file.writestr(entry, "device_name=TestDev_%d\r\nxlabel=Point number"%self.n)
 
 
 class AdlinkADC:
@@ -147,7 +147,7 @@ class AdlinkADC:
 
         def read_properties(self):
             # Read signal properties
-            ap = self.dev.db.get_device_attribute_property(self.dev.name, self.name)
+            ap = self.dev.db.get_device_attribute_property(self.dev.device_name, self.name)
             self.prop = ap[self.name]
             return self.prop
 
@@ -280,7 +280,7 @@ class AdlinkADC:
             elapsed = self.devProxy.read_attribute('Elapsed')
             self.shot_time = time.time()
             if elapsed.quality != tango._tango.AttrQuality.ATTR_VALID:
-                LOGGER.info('Non Valid attribute %s %s' % (elapsed.name, elapsed.quality))
+                LOGGER.info('Non Valid attribute %s %s' % (elapsed.device_name, elapsed.quality))
                 return -self.shot_time
             self.shot_time = self.shot_time - elapsed.value
             return self.shot_time
@@ -300,7 +300,7 @@ class AdlinkADC:
         return False
 
     def save_data(self, zip_file, chan):
-        entry = chan.dev.zip_folder + "/" + chan.name + ".txt"
+        entry = chan.dev.zip_folder + "/" + chan.device_name + ".txt"
         avg = chan.get_prop_as_int("save_avg")
         if avg < 1:
             avg = 1
@@ -310,8 +310,8 @@ class AdlinkADC:
         zip_file.writestr(entry, buf)
 
     def save_prop(self, zip_file, chan):
-        entry = chan.dev.zip_folder + "/" + "param" + chan.name + ".txt"
-        buf = "Signal_Name=%s/%s\r\n" % (chan.dev.name(), chan.name)
+        entry = chan.dev.zip_folder + "/" + "param" + chan.device_name + ".txt"
+        buf = "Signal_Name=%s/%s\r\n" % (chan.dev.device_name(), chan.device_name)
         buf += "Shot=%d\r\n" % chan.dev.shot
         prop_list = ['%s=%s'%(k, chan.prop[k][0]) for k in chan.prop]
         for prop in prop_list:
@@ -319,12 +319,12 @@ class AdlinkADC:
         zip_file.writestr(entry, buf)
 
     def save_log(self, log_file, chan):
-        # Signal label = default mark name
+        # Signal label = default mark device_name
         label = chan.get_prop('label')
         if label is None or '' == label:
-            label = chan.get_prop('name')
+            label = chan.get_prop('device_name')
         if label is None or '' == label:
-            label = chan.name
+            label = chan.device_name
         # Units
         unit = chan.get_prop('unit')
         # Calibration coefficient for conversion to units
@@ -348,9 +348,9 @@ class AdlinkADC:
                 # Default mark renamed to label
                 if mark_name == "mark":
                     mark_name = label
-                # Print mark name = value
+                # Print mark device_name = value
                 if first_line:
-                    print("%10s " % chan.name, end='')
+                    print("%10s " % chan.device_name, end='')
                     first_line = False
                 else:
                     print("%10s " % "  ", end='')
@@ -627,7 +627,7 @@ class TangoAttribute:
                         # default mark renamed to label
                         if mark_name == "mark":
                             mark_name = self.label
-                        # print mark name = value
+                        # print mark device_name = value
                         if first_line:
                             print("%10s " % self.name, end='')
                             first_line = False
@@ -704,7 +704,7 @@ class TangoAttribute:
         # label
         self.label = self.get_property('label')
         if self.label is None or '' == self.label:
-            self.label = self.get_property('name')
+            self.label = self.get_property('device_name')
         if self.label is None or '' == self.label:
             self.label = self.name
         # save_data and save_log flags
@@ -746,7 +746,7 @@ class TangoAttribute:
         # attribute label
         self.label = self.get_property('label')
         if self.label is None or '' == self.label:
-            self.label = self.get_property('name')
+            self.label = self.get_property('device_name')
         if self.label is None or '' == self.label:
             self.label = self.name
         # units
@@ -884,7 +884,7 @@ class ShotDumper:
                 # Open zip file
                 self.zipFile = self.open_zip_file(self.outFolder)
                 for item in self.device_list:
-                    print("Saving from %s" % item.name())
+                    print("Saving from %s" % item.device_name())
                     try:
                         item.save(self.logFile, self.zipFile)
                     except:
@@ -957,7 +957,7 @@ class ShotDumper:
     def unlock_dir(self):
         if self.lockFile is not None:
            self.lockFile.close()
-           os.remove(self.lockFile.name)
+           os.remove(self.lockFile.device_name)
         self.locked = False
         LOGGER.log(logging.DEBUG, "Directory unlocked")
 

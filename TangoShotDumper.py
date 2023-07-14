@@ -107,12 +107,12 @@ class TangoShotDumper:
                         item = eval(device["eval"])
                         item.logger = self.logger
                         # self.dumper_items.append(item)
-                        if item.name not in self.device_groups:
-                            self.device_groups[item.name] = {}
-                        if item.full_name in self.device_groups[item.name]:
+                        if item.device_name not in self.device_groups:
+                            self.device_groups[item.device_name] = {}
+                        if item.full_name in self.device_groups[item.device_name]:
                             self.logger.warning(f'Duplicate declaration of {item.full_name} - Ignored')
                         else:
-                            self.device_groups[item.name][item.full_name] = item
+                            self.device_groups[item.device_name][item.full_name] = item
                             self.dumper_items.append(item)
                             self.logger.info("%s has been added" % item.full_name)
                     else:
@@ -153,7 +153,7 @@ class TangoShotDumper:
             except KeyboardInterrupt:
                 raise
             except:
-                log_exception(self, "%s activation error", item.name)
+                log_exception(self, "%s activation error", item.device_name)
         return n
 
     def check_new_shot(self):
@@ -167,7 +167,7 @@ class TangoShotDumper:
             except KeyboardInterrupt:
                 raise
             except:
-                log_exception(self, "Error checking new shot for %s", item.name)
+                log_exception(self, "Error checking new shot for %s", item.device_name)
         return False
 
     @staticmethod
