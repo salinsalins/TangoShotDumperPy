@@ -107,3 +107,31 @@ class PrototypeDumperDevice:
             return int(str(value))
         except:
             return None
+
+    def smooth(self, array, n):
+        m = int(len(array) / n)
+        k = int(len(array) % n)
+        if m > 0:
+            sa = array[:m*n].reshape(m,n).mean(axis=1)
+            if k > 0:
+                sb = numpy.zeros(m+1)
+                sb[:-1] = sa
+                sb[-1] = sa[-k:].mean()
+                return sb
+        else:
+            sa = array.mean()
+        return sa
+
+    def print_log(self, mark_name, mark_value, unit):
+        pmn = mark_name
+        # if len(pmn) > 14:
+        #     pmn = mark_name[:5] + '...' + mark_name[-6:]
+        # print mark value
+        if abs(mark_value) >= 1000.0:
+            print("  ", "%14s = %7.0f %s\r\n" % (pmn, mark_value, unit), end='')
+        elif abs(mark_value) >= 100.0:
+            print("  ", "%14s = %7.1f %s\r\n" % (pmn, mark_value, unit), end='')
+        elif abs(mark_value) >= 10.0:
+            print("  ", "%14s = %7.2f %s\r\n" % (pmn, mark_value, unit), end='')
+        else:
+            print("  ", "%14s = %7.3f %s\r\n" % (pmn, mark_value, unit), end='')

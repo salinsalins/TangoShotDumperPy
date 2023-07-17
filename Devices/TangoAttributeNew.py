@@ -76,18 +76,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
         self.attr = self.device.read_attribute(self.attribute_name)
         self.properties['data_format'] = [str(self.attr.data_format)]
         self.properties['time'] = [str(self.attr.get_date().totime())]
-        if self.attr.data_format == AttrDataFormat.SPECTRUM:
-            x_name = self.attribute_name.replace('chany', 'chanx')
-            if x_name == self.attribute_name:
-                self.x_attr = None
-                return
-            try:
-                self.x_attr = self.device.read_attribute(x_name)
-            except:
-                self.x_attr = None
-        elif self.attr.data_format == AttrDataFormat.IMAGE:
-            self.x_attr = None
-            return
+        return
 
     def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
         if not folder.endswith('/'):
@@ -120,7 +109,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             coeff = 1.0
         # output data format
         frmt = self.properties.get('format', ['%6.2f'])[0]
-        data_format = self.properties.get('data_format', '')[0]
+        data_format = self.properties.get('data_format', [''])[0]
         if data_format == 'SCALAR':
             out_str = f'; {label} = {frmt % self.attr.value}'
             if unit != '' and unit != 'None' and unit != 'none':
@@ -153,20 +142,6 @@ class TangoAttributeNew(PrototypeDumperDevice):
         self.logger.debug('%s Log Saved', self.full_name)
         return
 
-    def print_log(self, mark_name, mark_value, unit):
-        pmn = mark_name
-        # if len(pmn) > 14:
-        #     pmn = mark_name[:5] + '...' + mark_name[-6:]
-        # print mark value
-        if abs(mark_value) >= 1000.0:
-            print("  ", "%14s = %7.0f %s\r\n" % (pmn, mark_value, unit), end='')
-        elif abs(mark_value) >= 100.0:
-            print("  ", "%14s = %7.1f %s\r\n" % (pmn, mark_value, unit), end='')
-        elif abs(mark_value) >= 10.0:
-            print("  ", "%14s = %7.2f %s\r\n" % (pmn, mark_value, unit), end='')
-        else:
-            print("  ", "%14s = %7.3f %s\r\n" % (pmn, mark_value, unit), end='')
-
     def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
         t0 = time.time()
         if self.attr is None:
@@ -181,31 +156,17 @@ class TangoAttributeNew(PrototypeDumperDevice):
             avg = 1
         data_format = self.properties.get('data_format', '')[0]
         if data_format == 'SCALAR':
-            zip_file.writestr(zip_entry, '%f' % self.attr.value)
+            zip_file.writestr(zip_entry, ('%f' % self.attr.value).replace(",", "."))
         elif data_format == 'SPECTRUM':
-            outbuf = ''
-            fmt = '%f'
             fmtcrlf = '%f' + '\r\n'
             try:
-                n = len(self.attr.value)
-                ys = 0.0
-                ns = 0.0
-                for k in range(n - 2):
-                    ys += self.attr.value[k]
-                    ns += 1.0
-                    if ns >= avg:
-                        s = fmtcrlf % (ys / ns)
-                        outbuf += s.replace(",", ".")
-                        ys = 0.0
-                        ns = 0.0
-                ys += self.attr.value[n - 1]
-                ns += 1.0
-                s = fmt % (ys / ns)
-                outbuf += s.replace(",", ".")
+                for v in self.attr.value:
+                    s = fmtcrlf % v
+                    zip_file.writestr(zip_entry, s.replace(",", "."))
+            except KeyboardInterrupt:
+                raise
             except:
-                s = fmt % self.attr.value
-                outbuf += s.replace(",", ".")
-            zip_file.writestr(zip_entry, outbuf)
+                pass
         elif data_format == 'IMAGE':
             self.logger.info('Data save is not implemented for IMAGE attributes')
             return
@@ -234,9 +195,11 @@ class TangoAttributeNew(PrototypeDumperDevice):
                 #     result[key] = self.y[index].mean()
                 # else:
                 #     result[key] = float('nan')
-                # index = numpy.searchsorted(self.x_attr.value, [rng[0], rng[1]])
-                # mrks[key] = self.attr.value[index[0]:index[1]].mean()
-                mrks[key] = self.attr.value[int(rng[0]):int(rng[1])].mean()
+                if hasattr(self, 'x_attr') and self.x_attr is not None:
+                    index = numpy.searchsorted(self.x_attr.value, [rng[0], rng[1]])
+                    mrks[key] = self.attr.value[index[0]:index[1]].mean()
+                else:
+                    mrks[key] = self.attr.value[int(rng[0]):int(rng[1])].mean()
             except:
                 mrks[key] = float('nan')
         self.marks = mrks
