@@ -47,7 +47,7 @@ class DumperTestDevice(PrototypeDumperDevice):
         if folder is None:
             folder = self.folder
         log_file.write('; %s=%f' % (self.device_name, self.time))
-        print('    %s = %f' % (self.device_name, self.time))
+        print('     %s = %f' % (self.device_name, self.time))
         if self.points > 0:
             signal = self.Channel(None, self.n, prefix='test_device_chany')  # PrototypeDumperDevice.Channel()
             signal.x = numpy.linspace(0.0, 2.0 * numpy.pi, self.points)
