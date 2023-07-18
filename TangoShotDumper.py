@@ -12,12 +12,12 @@ import sys
 import time
 import zipfile
 
-sys.path.append('../TangoUtils')
+if '../TangoUtils' not in sys.path: sys.path.append('../TangoUtils')
 from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
 
-# import all modules from Devices folder
+# import all modules from .\Devices folder
 folder_name = 'Devices'
 for filename in os.listdir(folder_name):
     # Process all python files in a directory that don't start
@@ -35,18 +35,17 @@ for filename in os.listdir(folder_name):
             log_exception(f'Error during import from {folder_name}.{module_name}')
 del fns, filename, module_name, folder_name
 
-DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.INFO, "out_root_dir": '.\\data\\',
+DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\data\\',
                   "shot_number": 1, "shot_time": 0.0, "devices": []
                   }
 
 
 class TangoShotDumper:
-    _version = '2.0'
+    _version = '2.2'
     _name = 'Tango Shot Dumper'
 
     def __init__(self, config_file_name=None, level=logging.INFO):
         self.logger = config_logger(format_string=LOG_FORMAT_STRING_SHORT, level=level)
-        # set defaults
         self.log_file = None
         self.zip_file = None
         self.out_dir = None
@@ -116,16 +115,16 @@ class TangoShotDumper:
                             self.dumper_items.append(item)
                             self.logger.info("%s has been added" % item.full_name)
                     else:
-                        self.logger.info("No 'eval' option for %s" % device)
+                        self.logger.warning("No 'eval' for %s" % device)
                 except KeyboardInterrupt:
                     raise
                 except:
-                    log_exception(self, "Device creation error for %s", str(device), level=logging.WARNING)
+                    log_exception(self, "%s creation error", str(device), level=logging.WARNING)
             if len(self.dumper_items) > 0:
                 self.logger.info('%d dumper devices has been configured', len(self.dumper_items))
                 return True
             else:
-                self.logger.warning('No dumper devices has been configured')
+                self.logger.error('No dumper devices has been configured')
                 return False
         except KeyboardInterrupt:
             raise
@@ -275,7 +274,7 @@ class TangoShotDumper:
                         except:
                             log_exception(self, "Exception saving %s", str(item))
                 if count == 0:
-                    print('    ** No active attributes **')
+                    print('    ** No signals dumped **')
                 self.logger.debug(f'Total time {(time.time() - t0) * 1000:.1f} ms')
             zfn = os.path.basename(self.zip_file.filename)
             self.zip_file.close()

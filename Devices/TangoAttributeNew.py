@@ -1,4 +1,4 @@
-from tango import AttrDataFormat
+import io
 
 from PrototypeDumperDeviceNew import *
 
@@ -25,7 +25,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             return False
         if self.device is None:
             self.active = False
-            return self.active
+            return False
         try:
             if self.attribute_name not in self.device.get_attribute_list():
                 self.logger.error(f'{self.device_name} do not have attribute {self.attribute_name}')
@@ -44,14 +44,14 @@ class TangoAttributeNew(PrototypeDumperDevice):
 
     def read_properties(self, force=False):
         # returns dictionary with attribute properties
-        if len(self.properties) > 0 and not force:
-            return self.properties
+        # if len(self.properties) > 0 and not force:
+        #     return self.properties
         try:
             self.config = self.device.get_attribute_config_ex(self.attribute_name)[0]
             al = ['max_dim_x', 'max_dim_x', 'data_format', 'data_type', 'unit', 'label', 'display_unit',
                   'format', 'min_value', 'max_value', 'name']
             for a in al:
-                val = getattr(self.config, a)
+                val = getattr(self.config, a, '')
                 self.properties[a] = [str(val)]
             db = self.device.get_device_db()
             self.properties.update(
@@ -59,39 +59,44 @@ class TangoAttributeNew(PrototypeDumperDevice):
         except KeyboardInterrupt:
             raise
         except:
-            self.properties = {}
+            log_exception(self.logger, '')
         return self.properties
 
     def save(self, log_file, zip_file, folder=None):
         if folder is None:
             folder = self.folder
-        # save_data and save_log flags
-        self.read_properties(True)
-        self.read_attribute()
-        retry_count = self.as_int(self.properties.get("retry_count", [3])[0], 1)
+        retry_count = self.get_property("retry_count", 3)
         properties_saved = False
         log_saved = False
         data_saved = False
         while retry_count > 0:
-            if not properties_saved and self.save_properties(zip_file, folder):
-                properties_saved = True
-            if not log_saved and self.save_log(log_file):
-                log_saved = True
-            if not data_saved and self.save_data(zip_file, folder):
-                data_saved = True
-            if log_saved and data_saved and properties_saved:
-                break
             retry_count -= 1
-        if retry_count == 0:
-            self.logger.warning("Error reading %s" % self.full_name)
-            return False
-        return True
+            if not properties_saved:
+                if not self.read_properties(True):
+                    continue
+                properties_saved = self.save_properties(zip_file, folder)
+            if not self.read_attribute():
+                continue
+            if not log_saved:
+                log_saved = self.save_log(log_file)
+            if not data_saved:
+                data_saved = self.save_data(zip_file, folder)
+            if log_saved and data_saved and properties_saved:
+                return True
+        self.logger.warning("Error saving %s" % self.full_name)
+        return False
 
     def read_attribute(self):
-        self.attr = self.device.read_attribute(self.attribute_name)
-        self.properties['data_format'] = [str(self.attr.data_format)]
-        self.properties['time'] = [str(self.attr.get_date().totime())]
-        return True
+        try:
+            self.attr = self.device.read_attribute(self.attribute_name)
+            self.properties['data_format'] = [str(self.attr.data_format)]
+            self.properties['time'] = [str(self.attr.get_date().totime())]
+            return True
+        except KeyboardInterrupt:
+            raise
+        except:
+            log_exception("Error reading %s" % self.full_name)
+        return False
 
     def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
         if not folder.endswith('/'):
@@ -124,7 +129,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
         frmt = self.get_property('format', '%6.2f')
         data_format = self.get_property('data_format', '')
         if data_format == 'SCALAR':
-            out_str = f'; {label} = {frmt % self.attr.value}'
+            out_str = f'; {label} = {frmt % (self.attr.value * coeff)}'
             if unit != '' and unit != 'None' and unit != 'none':
                 out_str += (" %s" % unit)
             self.print_log(label, self.attr.value, unit)
@@ -164,8 +169,8 @@ class TangoAttributeNew(PrototypeDumperDevice):
         if not folder.endswith('/'):
             folder += '/'
         zip_entry = folder + self.attribute_name + ".txt"
-        data_format = self.properties.get('data_format', [''])[0]
-        save_format = self.properties.get('save_format', ['%f'])[0]
+        data_format = self.get_property('data_format', '')
+        save_format = self.get_property('save_format', '%f')
         if data_format == 'SCALAR':
             zip_file.writestr(zip_entry, (save_format % self.attr.value).replace(",", "."))
         elif data_format == 'SPECTRUM':
@@ -212,23 +217,22 @@ class TangoAttributeNew(PrototypeDumperDevice):
                     mark_name = p_key.replace("_start", "")
                     if pl > 0.0:
                         result[mark_name] = (pv, pv + pl)
+                except KeyboardInterrupt:
+                    raise
                 except:
                     pass
-        # self.marks = result
         mrks = {}
         for key in result:
             try:
                 rng = result[key]
-                # index = numpy.logical_and(self.x >= rng[0], self.x <= rng[1])
-                # if numpy.any(index):
-                #     result[key] = self.y[index].mean()
-                # else:
-                #     result[key] = float('nan')
                 if hasattr(self, 'x_attr') and self.x_attr is not None:
                     index = numpy.searchsorted(self.x_attr.value, [rng[0], rng[1]])
                     mrks[key] = self.attr.value[index[0]:index[1]].mean()
                 else:
-                    mrks[key] = self.attr.value[int(rng[0]):int(rng[1])].mean()
+                    mrks[key] = self.attr.value[int(rng[0]):int(rng[1]+1)].mean()
+                    # self.logger.debug('%s(%s:%s) = %s', key, int(rng[0]), int(rng[1]+1), mrks[key])
+            except KeyboardInterrupt:
+                raise
             except:
                 mrks[key] = float('nan')
         self.marks = mrks

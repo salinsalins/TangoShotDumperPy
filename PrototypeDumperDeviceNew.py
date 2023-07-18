@@ -1,8 +1,5 @@
-import io
-import json
 import sys
 import time
-import logging
 import zipfile
 from typing import IO
 
@@ -10,8 +7,8 @@ import numpy
 import tango
 from tango import DevFailed, ConnectionFailed
 
-sys.path.append('../TangoUtils')
-from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
+if '../TangoUtils' not in sys.path: sys.path.append('../TangoUtils')
+from config_logger import config_logger
 from log_exception import log_exception
 
 
@@ -23,24 +20,21 @@ class PrototypeDumperDevice:
     def __init__(self, device_name: str, **kwargs):
         self.device_name = device_name
         self.kwargs = kwargs
+        self.full_name = self.device_name
         self.logger = config_logger()
         self.active = False
         self.device = None
         self.time = 0.0
-        self.activation_timeout = 10.0
+        self.activation_timeout = kwargs.get('activation_timeout', 10.0)
         self.reactivate = kwargs.get('reactivate', True)
-        self.full_name = self.device_name
-        self.properties = {}
-
-    def new_shot(self):
-        return False
+        self.properties = kwargs.get('properties', {})
 
     def activate(self):
         if self.active:
             return True
         if self.device_name in self.devices:
-            self.active = True
             self.device = self.devices[self.device_name]
+            self.active = True
             self.logger.debug("Reusing device %s", self.device_name)
             return True
         if (time.time() - self.time) < self.activation_timeout:
@@ -67,8 +61,11 @@ class PrototypeDumperDevice:
         except KeyboardInterrupt:
             raise
         except:
-            self.reactivate = False
             log_exception("Unexpected %s activation error: ", self.full_name)
+            self.reactivate = False
+        return False
+
+    def new_shot(self):
         return False
 
     def save(self, log_file: IO, zip_file: zipfile.ZipFile, folder: str = None):

@@ -53,5 +53,5 @@ class DumperTestDevice(PrototypeDumperDevice):
             signal.x = numpy.linspace(0.0, 2.0 * numpy.pi, self.points)
             signal.y = numpy.sin(signal.x + time.time() + self.n)
             signal.save_data(zip_file, folder)
-            entry = folder + '/' + signal.name.replace('chan', 'paramchan') + ".txt"
+            entry = folder + '/' + signal.name + "_parameters.txt"
             zip_file.writestr(entry, "name=%s\r\ndevice_name=%s\r\nxlabel=Phase [radians]\r\nunit=a.u." % (self.device_name, self.device_name))
