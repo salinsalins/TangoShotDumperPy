@@ -318,36 +318,32 @@ class PrototypeDumperDevice:
         #     self.logger.debug('Reading inactive device')
         #     return
 
-    def property(self, prop_name: str):
+    def get_property(self, prop_name: str, default=None):
+        result_type = type(default)
         try:
-            result = self.device.get_property(prop_name)[prop_name]
-            if len(result) == 1:
-                result = result[0]
-            return result
-            # return self.device.get_property(prop_name)[prop_name][0]
+            return result_type(self.properties.get(prop_name, [''])[0])
         except:
-            return ''
+            return default
 
-    def properties(self, filter: str = '*'):
-        # returns dictionary with device properties
-        names = self.device.get_property_list(filter)
-        return self.device.get_property(names)
-
+    # def properties(self, filter: str = '*'):
+    #     # returns dictionary with device properties
+    #     names = self.device.get_property_list(filter)
+    #     return self.device.get_property(names)
+    #
     @staticmethod
-    def as_boolean(value):
+    def as_boolean(value, default=False):
         value = str(value)
         if value.lower() in PrototypeDumperDevice.TRUE_VALUES:
             return True
-        if value.lower() in PrototypeDumperDevice.FALSE_VALUES:
-            return False
-        return None
+        else:
+            return default
 
     @staticmethod
-    def as_int(value):
+    def as_int(value, default=0):
         try:
             return int(str(value))
         except:
-            return None
+            return default
 
     def smooth(self, array, n):
         m = int(len(array) / n)

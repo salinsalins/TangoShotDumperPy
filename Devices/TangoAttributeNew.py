@@ -68,30 +68,46 @@ class TangoAttributeNew(PrototypeDumperDevice):
         # save_data and save_log flags
         self.read_properties(True)
         self.read_attribute()
-        self.save_properties(zip_file, folder)
-        self.save_log(log_file)
-        self.save_data(zip_file, folder)
+        retry_count = self.as_int(self.properties.get("retry_count", [3])[0], 1)
+        properties_saved = False
+        log_saved = False
+        data_saved = False
+        while retry_count > 0:
+            if not properties_saved and self.save_properties(zip_file, folder):
+                properties_saved = True
+            if not log_saved and self.save_log(log_file):
+                log_saved = True
+            if not data_saved and self.save_data(zip_file, folder):
+                data_saved = True
+            if log_saved and data_saved and properties_saved:
+                break
+            retry_count -= 1
+        if retry_count == 0:
+            self.logger.warning("Error reading %s" % self.full_name)
+            return False
+        return True
 
     def read_attribute(self):
         self.attr = self.device.read_attribute(self.attribute_name)
         self.properties['data_format'] = [str(self.attr.data_format)]
         self.properties['time'] = [str(self.attr.get_date().totime())]
-        return
+        return True
 
     def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
         if not folder.endswith('/'):
             folder += '/'
-        zip_entry = folder + "param" + self.attribute_name + ".txt"
-        buf = "Signal_Name=%s\r\n" % self.full_name
+        zip_entry = folder + self.attribute_name + "_parameters.txt"
+        buf = io.StringIO('')
+        buf.write("Signal_Name=%s\r\n" % self.full_name)
         for prop in self.properties:
-            buf += '%s=%s\r\n' % (prop, self.properties[prop][0])
-        zip_file.writestr(zip_entry, buf)
+            buf.write('%s=%s\r\n' % (prop, self.properties[prop][0]))
+        zip_file.writestr(zip_entry, buf.getvalue())
         self.logger.debug('%s Properties saved to %s', self.full_name, zip_entry)
         return True
 
     def save_log(self, log_file: IO, additional_marks=None):
         if self.attr is None:
-            return
+            return False
         if additional_marks is None:
             additional_marks = {}
         # Signal label = default mark device_name
@@ -101,15 +117,12 @@ class TangoAttributeNew(PrototypeDumperDevice):
         if '' == label:
             label = self.full_name
         # Units
-        unit = self.properties.get('unit', [''])[0]
+        unit = self.get_property('unit', '')
         # coefficient for conversion to units
-        try:
-            coeff = float(self.properties.get('display_unit', ['1.0'])[0])
-        except:
-            coeff = 1.0
+        coeff = self.get_property('display_unit', 1.0)
         # output data format
-        frmt = self.properties.get('format', ['%6.2f'])[0]
-        data_format = self.properties.get('data_format', [''])[0]
+        frmt = self.get_property('format', '%6.2f')
+        data_format = self.get_property('data_format', '')
         if data_format == 'SCALAR':
             out_str = f'; {label} = {frmt % self.attr.value}'
             if unit != '' and unit != 'None' and unit != 'none':
@@ -118,6 +131,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             log_file.write(out_str)
         elif data_format == 'SPECTRUM':
             self.compute_marks()
+            self.marks.update(additional_marks)
             zero = self.marks.get('zero', 0.0)
             np = 0
             for mark in self.marks:
@@ -137,40 +151,55 @@ class TangoAttributeNew(PrototypeDumperDevice):
             if np == 0:
                 print('    ', label, '---- no marks')
         elif data_format == 'IMAGE':
-            self.logger.info('Log save is not implemented for IMAGE attributes')
-            return
+            self.logger.debug('Log save is not implemented for IMAGE attributes')
+            return True
         self.logger.debug('%s Log Saved', self.full_name)
-        return
+        return True
 
     def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
         t0 = time.time()
         if self.attr is None:
             self.logger.debug('%s No data to save', self.full_name)
-            return
+            return False
         if not folder.endswith('/'):
             folder += '/'
         zip_entry = folder + self.attribute_name + ".txt"
-        try:
-            avg = int(self.read_properties().get("save_avg", ['1'])[0])
-        except:
-            avg = 1
-        data_format = self.properties.get('data_format', '')[0]
+        data_format = self.properties.get('data_format', [''])[0]
+        save_format = self.properties.get('save_format', ['%f'])[0]
         if data_format == 'SCALAR':
-            zip_file.writestr(zip_entry, ('%f' % self.attr.value).replace(",", "."))
+            zip_file.writestr(zip_entry, (save_format % self.attr.value).replace(",", "."))
         elif data_format == 'SPECTRUM':
-            fmtcrlf = '%f' + '\r\n'
+            frmt = save_format + '\r\n'
+            buf = io.StringIO('')
             try:
                 for v in self.attr.value:
-                    s = fmtcrlf % v
-                    zip_file.writestr(zip_entry, s.replace(",", "."))
+                    s = frmt % v
+                    buf.write(s.replace(",", "."))
+                zip_file.writestr(zip_entry, buf.getvalue())
             except KeyboardInterrupt:
                 raise
             except:
-                pass
+                log_exception('%s conversion error', self.full_name)
+                return False
         elif data_format == 'IMAGE':
-            self.logger.info('Data save is not implemented for IMAGE attributes')
-            return
+            if len(self.attr.value.shape) < 2:
+                self.logger.info('Wrong data format for IMAGE attribute %s', self.full_name)
+                return False
+            m = self.attr.value.shape[1]
+            frmt = ((save_format + '; ') * m)[:-2] + '\r\n'
+            buf = io.StringIO('')
+            try:
+                for i in range(self.attr.value.shape[0]):
+                    s = frmt % tuple(self.attr.value[i,:])
+                    buf.write(s.replace(",", "."))
+                zip_file.writestr(zip_entry, buf.getvalue())
+            except KeyboardInterrupt:
+                raise
+            except:
+                log_exception('%s conversion error', self.full_name)
+                return False
         self.logger.debug('%s Data saved to %s, total %ss', self.full_name, zip_entry, time.time() - t0)
+        return True
 
     def compute_marks(self):
         result = {}

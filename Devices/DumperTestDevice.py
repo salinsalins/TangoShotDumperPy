@@ -8,9 +8,9 @@ class DumperTestDevice(PrototypeDumperDevice):
     n = 0
 
     def __init__(self, delta_t=-1.0, points=0, folder='', properties=None):
-        super().__init__('test_device')
         self.n = DumperTestDevice.n
         self.device_name = 'TestDevice_%d' % self.n
+        super().__init__(self.device_name)
         self.shot = 0
         self.delta_t = delta_t
         self.points = points
@@ -54,4 +54,4 @@ class DumperTestDevice(PrototypeDumperDevice):
             signal.y = numpy.sin(signal.x + time.time() + self.n)
             signal.save_data(zip_file, folder)
             entry = folder + '/' + signal.name.replace('chan', 'paramchan') + ".txt"
-            zip_file.writestr(entry, "device_name=%s\r\nxlabel=Phase [radians]\r\nunit=a.u." % self.device_name)
+            zip_file.writestr(entry, "name=%s\r\ndevice_name=%s\r\nxlabel=Phase [radians]\r\nunit=a.u." % (self.device_name, self.device_name))

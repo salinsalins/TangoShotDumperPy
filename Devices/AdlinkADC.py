@@ -6,7 +6,7 @@ from PrototypeDumperDevice import *
 
 
 class AdlinkADC(PrototypeDumperDevice):
-    def __init__(self, device_name='binp/nbi/adc0', folder="ADC_0", **kwargs):
+    def __init__(self, device_name='binp/nbi/adc0', folder="", **kwargs):
         super().__init__(device_name, **kwargs)
         self.shot_time = 1.0
         self.folder = folder
@@ -19,6 +19,8 @@ class AdlinkADC(PrototypeDumperDevice):
             if shot.quality != AttrQuality.ATTR_VALID:
                 return -1
             return shot.value
+        except KeyboardInterrupt:
+            raise
         except:
             return -1
 
@@ -53,13 +55,13 @@ class AdlinkADC(PrototypeDumperDevice):
                 channel = PrototypeDumperDevice.Channel(self.device, attr)
                 channel.logger = self.logger
                 properties = channel.read_properties()
-                # save_data and save_log flags
+                # save options
                 sdf = self.as_boolean(properties.get("save_data", [False])[0])
                 slf = self.as_boolean(properties.get("save_log", [False])[0])
+                retry_count = self.as_int(properties.get("retry_count", [3])[0], 1)
                 properties_saved = False
                 log_saved = False
                 data_saved = False
-                retry_count = 3
                 while retry_count > 0:
                     try:
                         if sdf or slf:
@@ -80,6 +82,8 @@ class AdlinkADC(PrototypeDumperDevice):
                             channel.save_data(zip_file, folder)
                             data_saved = True
                         return
+                    except KeyboardInterrupt:
+                        raise
                     except:
                         log_exception("%s channel save exception", self.device_name, level=logging.WARNING)
                         retry_count -= 1

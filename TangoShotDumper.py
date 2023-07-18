@@ -122,7 +122,7 @@ class TangoShotDumper:
                 except:
                     log_exception(self, "Device creation error for %s", str(device), level=logging.WARNING)
             if len(self.dumper_items) > 0:
-                self.logger.debug('%d dumper devices has been configured', len(self.dumper_items))
+                self.logger.info('%d dumper devices has been configured', len(self.dumper_items))
                 return True
             else:
                 self.logger.warning('No dumper devices has been configured')
