@@ -51,11 +51,14 @@ class TangoAttributeNew(PrototypeDumperDevice):
             retry_count -= 1
             try:
                 self.config = self.device.get_attribute_config_ex(self.attribute_name)[0]
-                al = ['max_dim_x', 'max_dim_y', 'data_format', 'data_type', 'unit', 'label', 'display_unit',
-                      'format', 'min_value', 'max_value', 'name']
+                al = ['dim_x', 'dim_y', 'max_dim_x', 'max_dim_y', 'data_format', 'data_type',
+                      'unit', 'label', 'display_unit', 'format', 'min_value', 'max_value',
+                      'name', 'is_empty', 'has_failed', 'quality', 'nb_read', 'nb_written',
+                      'time']
                 for a in al:
                     val = getattr(self.config, a, '')
-                    self.properties[a] = [str(val)]
+                    if val:
+                        self.properties[a] = [str(val)]
                 db = self.device.get_device_db()
                 self.properties.update(
                     db.get_device_attribute_property(self.device_name, self.attribute_name)[self.attribute_name])
@@ -98,8 +101,15 @@ class TangoAttributeNew(PrototypeDumperDevice):
     def read_attribute(self):
         try:
             self.attr = self.device.read_attribute(self.attribute_name)
-            self.properties['data_format'] = [str(self.attr.data_format)]
-            self.properties['time'] = [str(self.attr.get_date().totime())]
+            al = ['dim_x', 'dim_y', 'max_dim_x', 'max_dim_y', 'data_format', 'data_type',
+                  'unit', 'label', 'display_unit', 'format', 'min_value', 'max_value',
+                  'name', 'is_empty', 'has_failed', 'quality', 'nb_read', 'nb_written',
+                  'time']
+            for a in al:
+                val = getattr(self.attr, a, '')
+                if val:
+                    self.properties[a] = [str(val)]
+            self.properties['time_ms'] = [str(self.attr.get_date().totime())]
             return True
         except KeyboardInterrupt:
             raise
@@ -175,6 +185,9 @@ class TangoAttributeNew(PrototypeDumperDevice):
         if self.attr is None:
             self.logger.debug('%s No data to save', self.full_name)
             return False
+        if self.attr.value is None:
+            self.logger.debug('%s Empty attribute - no data to save', self.full_name)
+            return True
         if not folder.endswith('/'):
             folder += '/'
         zip_entry = folder + self.attribute_name + ".txt"

@@ -278,7 +278,7 @@ class TangoShotDumper:
                         except KeyboardInterrupt:
                             raise
                         except:
-                            log_exception(self, "Exception saving %s", str(item))
+                            log_exception(self.logger, "Exception saving %s", str(item), no_info=False)
                 if count == 0:
                     print('    ** No signals dumped **')
                 self.logger.debug(f'Total time {(time.time() - t0) * 1000:.1f} ms')
