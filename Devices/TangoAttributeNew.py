@@ -51,7 +51,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             retry_count -= 1
             try:
                 self.config = self.device.get_attribute_config_ex(self.attribute_name)[0]
-                al = ['max_dim_x', 'max_dim_x', 'data_format', 'data_type', 'unit', 'label', 'display_unit',
+                al = ['max_dim_x', 'max_dim_y', 'data_format', 'data_type', 'unit', 'label', 'display_unit',
                       'format', 'min_value', 'max_value', 'name']
                 for a in al:
                     val = getattr(self.config, a, '')

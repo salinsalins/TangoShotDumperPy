@@ -61,6 +61,8 @@ class TangoShotDumper:
         self.shot_time_value = self.config.get("shot_time")
         self.dumper_items = []
         self.device_groups = {}
+        self.active = set()
+        self.inactive = set()
 
     def read_shot_number(self):
         return self.shot_number_value
@@ -149,6 +151,10 @@ class TangoShotDumper:
             try:
                 if item.activate():
                     n += 1
+                    self.active.add(item)
+                else:
+                    self.active.remove(item)
+                    self.inactive.add(item)
             except KeyboardInterrupt:
                 raise
             except:
@@ -286,6 +292,7 @@ class TangoShotDumper:
             raise
         except:
             log_exception(self, "Unexpected exception")
+        print("Active items: ", len(self.active), "  Inactive items: ", len(self.inactive))
         print(self.time_stamp(), "Waiting for next shot ...")
         return
 
