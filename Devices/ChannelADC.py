@@ -33,26 +33,29 @@ class ChannelADC(TangoAttributeNew):
         flag1 = self.get_property("save_data", False)
         flag2 = self.get_property("save_log", False)
         if not (flag1 and flag2):
-            self.logger.debug('%s save properties not allowed', self.full_name)
+            # self.logger.debug('%s save properties not allowed', self.full_name)
             return True
         return super().save_properties(zip_file, folder)
 
     def save_log(self, log_file: IO, additional_marks=None):
         flag = self.get_property("save_log", False)
         if not flag:
-            self.logger.debug('%s save log not allowed', self.full_name)
+            # self.logger.debug('%s save log not allowed', self.full_name)
             return True
         return super().save_log(log_file, additional_marks)
 
     def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
         flag = self.get_property("save_data", False)
         if not flag:
-            self.logger.debug('%s save data not allowed', self.full_name)
+            # self.logger.debug('%s save data not allowed', self.full_name)
             return True
         t0 = time.time()
         if self.attr is None:
             self.logger.debug('%s No data to save', self.full_name)
             return False
+        if self.attr.value is None:
+            self.logger.debug('%s Empty attribute - no data to save', self.full_name)
+            return True
         if not folder.endswith('/'):
             folder += '/'
         zip_entry = folder + self.attribute_name + ".txt"

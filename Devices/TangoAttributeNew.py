@@ -66,8 +66,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             except KeyboardInterrupt:
                 raise
             except:
-                pass
-                # log_exception(self.logger, '%s Can not read properties', self.full_name)
+                log_exception(self.logger, '%s Can not read properties', self.full_name, no_info=False)
         self.logger.warning('%s Can not read properties', self.full_name)
         return False
 
@@ -253,7 +252,10 @@ class TangoAttributeNew(PrototypeDumperDevice):
                 rng = result[key]
                 if hasattr(self, 'x_attr') and self.x_attr is not None:
                     index = numpy.searchsorted(self.x_attr.value, [rng[0], rng[1]])
-                    mrks[key] = self.attr.value[index[0]:index[1]].mean()
+                    if index[0] < index[1]:
+                        mrks[key] = self.attr.value[index[0]:index[1]].mean()
+                    else:
+                        mrks[key] = self.attr.value[index[0]]
                 else:
                     mrks[key] = self.attr.value[int(rng[0]):int(rng[1]+1)].mean()
                     # self.logger.debug('%s(%s:%s) = %s', key, int(rng[0]), int(rng[1]+1), mrks[key])
