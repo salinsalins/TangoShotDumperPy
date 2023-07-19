@@ -77,7 +77,17 @@ class PrototypeDumperDevice:
     def get_property(self, prop_name: str, default=None):
         result_type = type(default)
         try:
-            return result_type(self.properties.get(prop_name, [''])[0])
+            if prop_name in self.properties:
+                result = self.properties[prop_name][0]
+                if isinstance(default, bool):
+                    if result.lower() in PrototypeDumperDevice.TRUE_VALUES:
+                        return True
+                    else:
+                        return False
+                else:
+                        return result_type(result)
+            else:
+                return default
         except:
             return default
 

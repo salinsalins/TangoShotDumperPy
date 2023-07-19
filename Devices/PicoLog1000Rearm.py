@@ -5,6 +5,8 @@ from PrototypeDumperDevice import *
 class PicoLog1000Rearm(PicoLog1000):
 
     def activate(self):
+        if not super().activate():
+            return False
         record_in_progress = self.device.read_attribute('record_in_progress').value
         if record_in_progress:
             self.logger.warning(f'{self.device_name} Record in progress - can not rearm')

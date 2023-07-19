@@ -46,36 +46,45 @@ class TangoAttributeNew(PrototypeDumperDevice):
         # returns dictionary with attribute properties
         # if len(self.properties) > 0 and not force:
         #     return self.properties
-        try:
-            self.config = self.device.get_attribute_config_ex(self.attribute_name)[0]
-            al = ['max_dim_x', 'max_dim_x', 'data_format', 'data_type', 'unit', 'label', 'display_unit',
-                  'format', 'min_value', 'max_value', 'name']
-            for a in al:
-                val = getattr(self.config, a, '')
-                self.properties[a] = [str(val)]
-            db = self.device.get_device_db()
-            self.properties.update(
-                db.get_device_attribute_property(self.device_name, self.attribute_name)[self.attribute_name])
-        except KeyboardInterrupt:
-            raise
-        except:
-            log_exception(self.logger, '')
-        return self.properties
+        retry_count = 3
+        while retry_count > 0:
+            retry_count -= 1
+            try:
+                self.config = self.device.get_attribute_config_ex(self.attribute_name)[0]
+                al = ['max_dim_x', 'max_dim_x', 'data_format', 'data_type', 'unit', 'label', 'display_unit',
+                      'format', 'min_value', 'max_value', 'name']
+                for a in al:
+                    val = getattr(self.config, a, '')
+                    self.properties[a] = [str(val)]
+                db = self.device.get_device_db()
+                self.properties.update(
+                    db.get_device_attribute_property(self.device_name, self.attribute_name)[self.attribute_name])
+                return True
+            except KeyboardInterrupt:
+                raise
+            except:
+                pass
+                # log_exception(self.logger, '%s Can not read properties', self.full_name)
+        self.logger.warning('%s Can not read properties', self.full_name)
+        return False
 
     def save(self, log_file, zip_file, folder=None):
         if folder is None:
             folder = self.folder
-        retry_count = self.get_property("retry_count", 3)
+        if not self.read_properties(True):
+            return False
         properties_saved = False
         log_saved = False
+        data_ready = False
         data_saved = False
+        retry_count = self.get_property("retry_count", 3)
         while retry_count > 0:
             retry_count -= 1
             if not properties_saved:
-                if not self.read_properties(True):
-                    continue
                 properties_saved = self.save_properties(zip_file, folder)
-            if not self.read_attribute():
+            if not data_ready:
+                data_ready = self.read_attribute()
+            if not data_ready:
                 continue
             if not log_saved:
                 log_saved = self.save_log(log_file)
@@ -171,9 +180,12 @@ class TangoAttributeNew(PrototypeDumperDevice):
         zip_entry = folder + self.attribute_name + ".txt"
         data_format = self.get_property('data_format', '')
         save_format = self.get_property('save_format', '%f')
+        n = 1
+        m = 1
         if data_format == 'SCALAR':
             zip_file.writestr(zip_entry, (save_format % self.attr.value).replace(",", "."))
         elif data_format == 'SPECTRUM':
+            n = self.attr.value.shape[0]
             frmt = save_format + '\r\n'
             buf = io.StringIO('')
             try:
@@ -190,11 +202,12 @@ class TangoAttributeNew(PrototypeDumperDevice):
             if len(self.attr.value.shape) < 2:
                 self.logger.info('Wrong data format for IMAGE attribute %s', self.full_name)
                 return False
+            n = self.attr.value.shape[0]
             m = self.attr.value.shape[1]
             frmt = ((save_format + '; ') * m)[:-2] + '\r\n'
             buf = io.StringIO('')
             try:
-                for i in range(self.attr.value.shape[0]):
+                for i in range(n):
                     s = frmt % tuple(self.attr.value[i,:])
                     buf.write(s.replace(",", "."))
                 zip_file.writestr(zip_entry, buf.getvalue())
@@ -203,7 +216,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             except:
                 log_exception('%s conversion error', self.full_name)
                 return False
-        self.logger.debug('%s Data saved to %s, total %ss', self.full_name, zip_entry, time.time() - t0)
+        self.logger.debug('%s Data saved to %s. Total %s*%s points in % s', self.full_name, zip_entry, n, m, time.time() - t0)
         return True
 
     def compute_marks(self):
