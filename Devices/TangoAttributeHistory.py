@@ -74,10 +74,16 @@ class TangoAttributeHistory(TangoAttributeNew):
         self.attr.value = self.y
         old_data_format = self.properties['data_format']
         self.properties['data_format'] = ['SPECTRUM']
+        old_label = self.properties.get('label', None)
+        self.properties['label'] = [self.attribute_name]
         result = super().save_log(log_file, additional_marks)
         self.attr.value = old_value
         self.properties['data_format'] = old_data_format
         self.attribute_name = old_name
+        if old_label is not None:
+            self.properties['label'] = old_label
+        else:
+            self.properties.pop('label', [])
         return result
 
     def save_properties(self, zip_file, folder=''):

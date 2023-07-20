@@ -5,23 +5,15 @@
 Shot dumper tango device server
 A. L. Sanin, started 25.06.2021
 """
-import datetime
-import logging
-import os
 import sys
 import time
-import json
-import zipfile
 
-import tango
 from tango import AttrQuality, AttrWriteType, DispLevel, DevState
 from tango.server import Device, attribute, command, pipe, device_property
 
+if '../TangoUtils' not in sys.path: sys.path.append('../TangoUtils')
 from TangoServerPrototype import TangoServerPrototype
 from TangoShotDumper import TangoShotDumper
-
-sys.path.append('../TangoUtils')
-from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
 
 
@@ -41,18 +33,14 @@ class TangoShotDumperServer(TangoServerPrototype):
                           unit="s", format="%f",
                           doc="Last shot time")
 
-    def init_device(self):
-        # init base class TangoServerPrototype self.set_config() will be called insight
-        TangoServerPrototype.init_device(self)
-        if self.get_state() == DevState.RUNNING:
-            # add to servers list
-            if self not in TangoShotDumperServer.device_list:
-                TangoShotDumperServer.device_list.append(self)
-            #
-            print(TangoShotDumperServer.time_stamp(), "Waiting for next shot ...")
-        else:
-            self.logger.warning('Errors init device')
-
+    # def init_device(self):
+    #     # init base class TangoServerPrototype self.set_config() will be called insight
+    #     super().init_device()
+    #     if self.get_state() == DevState.RUNNING:
+    #         print(self.dumper.time_stamp(), "Waiting for next shot ...")
+    #     else:
+    #         self.logger.warning('Errors init device')
+    #
     def set_config(self):
         try:
             # set_config for TangoServerPrototype part
@@ -75,10 +63,10 @@ class TangoShotDumperServer(TangoServerPrototype):
             self.dumper = TangoShotDumper(self.config.file_name)
             # set_config for TangoShotDumper part
             if self.dumper.set_config():
-                self.set_state(DevState.RUNNING)
+                self.set_state(DevState.RUNNING, 'Configured successfully')
                 return True
             else:
-                self.set_state(DevState.FAULT)
+                self.set_state(DevState.FAULT, 'Initial configuration error')
                 return False
         except:
             log_exception('Configuration set error for %s', self.config.file_name)
@@ -106,7 +94,14 @@ def looping():
             time.sleep(dev.config['sleep'] - dt)
         try:
             if dev.get_state() == DevState.RUNNING:
+                if dev.activate() <= 0:
+                    continue
+                # check for new shot
+                if not dev.check_new_shot():
+                    continue
+                dev.set_status('Processing shot')
                 dev.dumper.process()
+                dev.set_status('Waiting new shot')
             # msg = '%s processed' % dev.device_name
             # dev.logger.debug(msg)
             # dev.debug_stream(msg)
