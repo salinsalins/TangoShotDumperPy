@@ -1,22 +1,13 @@
 {
-    "sleep": 3.0,
+    "sleep": 1.0,
     "Loglevel": 40,
-    "outDir": "D:\\testdata\\",
+    "outDir": "D:\\data\\",
     "devices": [
         {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','DO_NOT_SHOW', folder='trigger')"
-        },
-        {
-            "eval": "AdlinkADC(dev='binp/nbi/BCcal', avg=1, folder='BC_ADC_0')"
-        },
-        {
-            "eval": "TangoAttribute('binp/nbi/BCcal','Beam_power', folder='BC_ADC_0')"
+            "eval": "AdlinkADC(dev='binp/nbi/adc0', avg=100, folder='ADC_0')"
         },
         {
             "eval": "AdlinkADC(dev='binp/nbi/fakeADC', avg=100, folder='ADC_0')"
-        },
-        {
-            "eval": "AdlinkADC(dev='binp/sotnikov/fcprofile', avg=100, folder='ADC_0')"
         },
         {
             "eval": "TangoAttribute('binp/nbi/lauda', '1012', folder='example')"
@@ -124,39 +115,6 @@
             "eval": "TangoAttribute('binp/nbi/timing','channel_enable10', folder='Time')"
         },
         {
-            "eval": "TangoAttribute('et7000_server/test/pet6_7060','di02', folder='BD')"
-        },
-        {
-            "eval": "TangoAttribute('et7000_server/test/pet6_7060','di03', folder='BD')"
-        },
-        {
-            "eval": "TangoAttribute('et7000_server/test/pet6_7060','di04', folder='BD')"
-        },
-        {
-            "eval": "TangoAttribute('et7000_server/test/pet6_7060','di05', folder='BD')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','PH2Pa', folder='Scalaratr')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','PH2', folder='Scalaratr')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','FCa', folder='Scalaratr')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','FCb', folder='Scalaratr')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','FCl', folder='Scalaratr')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','QMAG1', folder='Scalaratr')"
-        },
-        {
-            "eval": "TangoAttribute('auto/manual_write/scalar_atr','QMAG2', folder='Scalaratr')"
-        },
-        {
             "exec": "from peak2peak import TangoAttributepeak2peak",
             "eval": "TangoAttributepeak2peak('et7000_server/test/1','ai00', folder='BCandBPM')"
         },
@@ -252,14 +210,8 @@
         },
         {
             "eval": "TangoAttribute('binp/CS/bot','IOvenr', folder='Csbot')"
-        },
-        {
-            "eval": "AdlinkADC(dev='binp/nbi/adc0', avg=100, folder='ADC_0')"
-        },
-        {
-            "eval": "AdlinkADC(dev='nbi/pico/picolog1', avg=1, folder='ADC_pico')"
         }
     ],
-    "shot": 33246,
-    "shot_time": "2023-06-15 12:17:07"
+    "shot": 14688,
+    "shot_time": "2021-06-22 16:49:26"
 }

@@ -56,8 +56,8 @@ class TangoAttributeNew(PrototypeDumperDevice):
                       'name', 'is_empty', 'has_failed', 'quality', 'nb_read', 'nb_written',
                       'time']
                 for a in al:
-                    val = getattr(self.config, a, '')
-                    if val:
+                    val = getattr(self.config, a, None)
+                    if val is not None:
                         self.properties[a] = [str(val)]
                 db = self.device.get_device_db()
                 self.properties.update(
@@ -116,7 +116,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
             log_exception("Error reading %s" % self.full_name)
         return False
 
-    def save_properties(self, zip_file: zipfile.ZipFile, folder: str = ''):
+    def save_properties(self, zip_file, folder=''):
         if not folder.endswith('/'):
             folder += '/'
         zip_entry = folder + self.attribute_name + "_parameters.txt"
@@ -128,7 +128,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
         self.logger.debug('%s Properties saved to %s', self.full_name, zip_entry)
         return True
 
-    def save_log(self, log_file: IO, additional_marks=None):
+    def save_log(self, log_file, additional_marks=None):
         if self.attr is None:
             return False
         if additional_marks is None:
@@ -179,7 +179,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
         self.logger.debug('%s Log Saved', self.full_name)
         return True
 
-    def save_data(self, zip_file: zipfile.ZipFile, folder: str = ''):
+    def save_data(self, zip_file, folder=''):
         t0 = time.time()
         if self.attr is None:
             self.logger.debug('%s No data to save', self.full_name)

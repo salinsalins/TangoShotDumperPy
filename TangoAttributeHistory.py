@@ -3,44 +3,46 @@ import time
 import numpy
 import tango
 
-from TangoAttributeOld import TangoAttribute
+from Devices.TangoAttributeNew import TangoAttributeNew
 
 
-class TangoAttributeHistory(TangoAttribute):
+class TangoAttributeHistory(TangoAttributeNew):
     def __init__(self, device_name, attribute_name, folder=None, delta_t=120.0, **kwargs):
         super().__init__(device_name, attribute_name, folder, True, **kwargs)
         self.delta_t = delta_t
+        self.full_name += '_history'
 
     def read_attribute(self):
-        self.channel.read_y()
-        self.channel.y = None
-        self.channel.x = None
-        self.channel.file_name = self.channel.device_name + '_history'
-        self.channel.properties['history'] = ['True']
-        if not self.channel.y_attr.data_format == tango._tango.AttrDataFormat.SCALAR:
-            self.logger.info("History of non SCALAR attribute %s is not supported" % self.channel.device_name)
-            return
-        period = self.device.get_attribute_poll_period(self.channel.device_name)
+        super().read_attribute()
+        self.file_name = self.full_name + '_history'
+        self.properties['history'] = ['True']
+        if self.attr.data_format != tango.AttrDataFormat.SCALAR:
+            self.logger.info("History of non SCALAR attribute %s is not supported" % self.full_name)
+            return False
+        period = self.device.get_attribute_poll_period(self.attribute_name)
         if period <= 0:
-            self.logger.info("Attribute %s is not polled" % self.channel.device_name)
-            return
+            self.logger.info("Attribute %s is not polled" % self.full_name)
+            return False
         m = int(self.delta_t * 1000.0 / period + 10)
-        history = self.device.attribute_history(self.channel.device_name, m)
+        history = self.device.attribute_history(self.attribute_name, m)
         n = len(history)
         if n <= 0:
-            self.logger.info("Empty history for %s" % self.channel.device_name)
-            return
+            self.logger.info("Empty history for %s" % self.full_name)
+            return False
         y = numpy.zeros(n)
         x = numpy.zeros(n)
         for i, h in enumerate(history):
-            if h.quality != tango._tango.AttrQuality.ATTR_VALID:
+            if h.quality != tango.AttrQuality.ATTR_VALID:
                 y[i] = numpy.nan
             else:
                 y[i] = h.value
                 x[i] = h.time.totime()
-        index = numpy.logical_and(y != numpy.nan, x > (time.time() - self.delta_t))
+        index = numpy.logical_and(y != numpy.nan, x >= (time.time() - self.delta_t))
         if len(y[index]) <= 0:
-            self.logger.info("%s No values for %f seconds in history", self.channel.device_name, self.delta_t)
-            return
-        self.channel.y = y[index]
-        self.channel.x = x[index]
+            self.logger.info("%s No values for %f seconds in history", self.full_name, self.delta_t)
+            return False
+        # self.y = y[index]
+        # self.x = x[index]
+        self.attr.value = numpy.stack((x[index], y[index]), 1)
+        self.properties['data_format'] = ['IMAGE']
+
