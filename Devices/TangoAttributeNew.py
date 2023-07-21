@@ -4,12 +4,13 @@ from PrototypeDumperDeviceNew import *
 
 
 class TangoAttributeNew(PrototypeDumperDevice):
-    def __init__(self, device_name, attribute_name, folder='', force=True, **kwargs):
+    def __init__(self, device_name, attribute_name, folder=None, force=True, **kwargs):
         super().__init__(device_name, **kwargs)
         self.attribute_name = attribute_name
         self.full_name = self.device_name + '/' + attribute_name
-        if not folder:
-            self.folder = device_name.replace('\\', '_').replace('/', '_')
+        if folder is None:
+            # self.folder = device_name.replace('\\', '_').replace('/', '_')
+            self.folder = device_name
         else:
             self.folder = folder
         self.force = force
