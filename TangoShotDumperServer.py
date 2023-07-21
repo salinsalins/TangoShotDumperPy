@@ -102,8 +102,10 @@ def looping():
                 dev.set_status('Processing shot')
                 dev.dumper.process()
                 n = dev.read_shot_number()
+                t = dev.read_shot_time()
                 dev.set_attribute_property('shot_number', '__value', n)
-                dev.set_status('Waiting new shot')
+                dev.set_attribute_property('shot_time', '__value', t)
+                dev.set_status('Waiting for new shot')
             # msg = '%s processed' % dev.device_name
             # dev.logger.debug(msg)
             # dev.debug_stream(msg)
