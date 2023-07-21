@@ -8,8 +8,8 @@ A. L. Sanin, started 25.06.2021
 import sys
 import time
 
-from tango import AttrQuality, AttrWriteType, DispLevel, DevState
-from tango.server import Device, attribute, command, pipe, device_property
+from tango import AttrWriteType, DispLevel, DevState
+from tango.server import attribute
 
 if '../TangoUtils' not in sys.path: sys.path.append('../TangoUtils')
 from TangoServerPrototype import TangoServerPrototype
@@ -18,7 +18,7 @@ from log_exception import log_exception
 
 
 class TangoShotDumperServer(TangoServerPrototype):
-    server_version_value = '2.0'
+    server_version_value = '2.1'
     server_name_value = 'Tango Shot Dumper Server'
 
     shot_number = attribute(label="last_shot_number", dtype=int,
@@ -94,13 +94,15 @@ def looping():
             time.sleep(dev.config['sleep'] - dt)
         try:
             if dev.get_state() == DevState.RUNNING:
-                if dev.activate() <= 0:
+                if dev.dumper.activate() <= 0:
                     continue
                 # check for new shot
-                if not dev.check_new_shot():
+                if not dev.dumper.check_new_shot():
                     continue
                 dev.set_status('Processing shot')
                 dev.dumper.process()
+                n = dev.read_shot_number()
+                dev.set_attribute_property('shot_number', '__value', n)
                 dev.set_status('Waiting new shot')
             # msg = '%s processed' % dev.device_name
             # dev.logger.debug(msg)
