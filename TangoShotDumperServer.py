@@ -18,7 +18,7 @@ from log_exception import log_exception
 
 
 class TangoShotDumperServer(TangoServerPrototype):
-    server_version_value = '2.1'
+    server_version_value = '2.5'
     server_name_value = 'Tango Shot Dumper Server'
 
     shot_number = attribute(label="last_shot_number", dtype=int,
@@ -45,6 +45,8 @@ class TangoShotDumperServer(TangoServerPrototype):
         try:
             # set_config for TangoServerPrototype part
             super().set_config()
+            self.pre = f'{self.name} TangoShotDumperServer'
+            self.set_state(DevState.INIT, 'Initial configuration started')
             # set shot_number and short time from DB
             try:
                 pr = self.get_attribute_property('shot_number', '__value')
@@ -69,8 +71,8 @@ class TangoShotDumperServer(TangoServerPrototype):
                 self.set_state(DevState.FAULT, 'Initial configuration error')
                 return False
         except:
-            log_exception('Configuration set error for %s', self.config.file_name)
-            self.set_state(DevState.FAULT)
+            self.log_exception('Configuration set error')
+            self.set_state(DevState.FAULT, 'Configuration set error')
             return False
 
     # def write_shot_time(self, value):
