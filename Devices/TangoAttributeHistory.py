@@ -19,7 +19,6 @@ class TangoAttributeHistory(TangoAttributeNew):
 
     def read_attribute(self):
         super().read_attribute()
-        self.properties['history'] = ['True']
         if self.attr.data_format != tango.AttrDataFormat.SCALAR:
             self.logger.info("History of non SCALAR attribute %s is not supported" % self.full_name)
             return False
@@ -27,8 +26,22 @@ class TangoAttributeHistory(TangoAttributeNew):
         if period <= 0:
             self.logger.info("Attribute %s is not polled" % self.full_name)
             return False
-        m = int(self.delta_t * 1000.0 / period + 10)
         self.t0 = time.time()
+        try:
+            t0_server = self.kwargs.get('t0_server', None)
+            t0_attribute = self.kwargs.get('t0_attribute', 'elapsed')
+            t0_delta = self.kwargs.get('t0_delta', True)
+            if t0_server:
+                t0 = tango.DeviceProxy(t0_server).read_attribute(t0_attribute).value
+                if t0_delta:
+                   self.t0 = time.time() - t0
+                else:
+                   self.t0 = t0
+        except KeyboardInterrupt:
+            raise
+        except:
+            pass
+        m = int(self.delta_t * 1000.0 / period + 1000)
         history = self.device.attribute_history(self.attribute_name, m)
         n = len(history)
         if n <= 0:

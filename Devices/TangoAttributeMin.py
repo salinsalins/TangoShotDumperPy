@@ -15,7 +15,7 @@ class TangoAttributeMin(TangoAttributeHistory):
         self.properties['integral'] = ['True']
         self.properties['delta_t'] = ['0.0']
         if self.y is not None:
-            self.y = numpy.max(self.y)
+            self.y = numpy.min(self.y)
             self.properties['delta_t'] = [str(numpy.ptp(self.x))]
             self.x = None
             return True

@@ -98,9 +98,15 @@ class TangoAttributeNew(PrototypeDumperDevice):
         self.logger.warning("Error saving %s" % self.full_name)
         return False
 
-    def read_attribute(self):
+    def read_attribute(self, **kwargs):
         try:
-            self.attr = self.device.read_attribute(self.attribute_name)
+            device = kwargs.get('device', None)
+            if device is None:
+                device = self.device
+            attr_name = kwargs.get('attr_name', None)
+            if attr_name is None:
+                attr_name = self.attribute_name
+            self.attr = device.read_attribute(attr_name)
             al = ['dim_x', 'dim_y', 'max_dim_x', 'max_dim_y', 'data_format', 'data_type',
                   'unit', 'label', 'display_unit', 'format', 'min_value', 'max_value',
                   'name', 'is_empty', 'has_failed', 'quality', 'nb_read', 'nb_written',
@@ -109,7 +115,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
                 val = getattr(self.attr, a, '')
                 if val:
                     self.properties[a] = [str(val)]
-            self.properties['time_ms'] = [str(self.attr.get_date().totime())]
+            self.properties['time_s'] = [str(self.attr.get_date().totime())]
             return True
         except KeyboardInterrupt:
             raise

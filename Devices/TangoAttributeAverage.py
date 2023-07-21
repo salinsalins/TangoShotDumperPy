@@ -15,7 +15,7 @@ class TangoAttributeAverage(TangoAttributeHistory):
         self.properties['integral'] = ['True']
         self.properties['delta_t'] = ['0.0']
         if self.y is not None:
-            dt = numpy.ptp(self.x)
+            dt = self.x[-1] - self.x[0]
             if dt <= 0.0:
                 return False
             self.y = numpy.trapz(self.y, self.x) / dt
