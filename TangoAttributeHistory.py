@@ -3,10 +3,10 @@ import time
 import numpy
 import tango
 
-from Devices.TangoAttributeNew import TangoAttributeNew
+from Devices.TangoAttribute import TangoAttribute
 
 
-class TangoAttributeHistory(TangoAttributeNew):
+class TangoAttributeHistory(TangoAttribute):
     def __init__(self, device_name, attribute_name, folder=None, delta_t=120.0, **kwargs):
         super().__init__(device_name, attribute_name, folder, True, **kwargs)
         self.delta_t = delta_t

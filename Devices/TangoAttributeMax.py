@@ -1,7 +1,7 @@
 import numpy
 
 from Devices.TangoAttributeHistory import TangoAttributeHistory
-from Devices.TangoAttributeNew import TangoAttributeNew
+from Devices.TangoAttribute import TangoAttribute
 
 
 class TangoAttributeMax(TangoAttributeHistory):
@@ -26,7 +26,7 @@ class TangoAttributeMax(TangoAttributeHistory):
         self.attribute_name += '_max'
         old_value = self.attr.value
         self.attr.value = self.y
-        result = TangoAttributeNew.save_data(self, zip_file, folder)
+        result = TangoAttribute.save_data(self, zip_file, folder)
         self.attr.value = old_value
         self.attribute_name = old_name
         return result
@@ -38,7 +38,7 @@ class TangoAttributeMax(TangoAttributeHistory):
         self.attr.value = self.y
         old_label = self.properties.get('label', None)
         self.properties['label'] = [self.attribute_name]
-        result = TangoAttributeNew.save_log(self, log_file, additional_marks)
+        result = TangoAttribute.save_log(self, log_file, additional_marks)
         self.attr.value = old_value
         self.attribute_name = old_name
         if old_label is not None:
@@ -52,7 +52,7 @@ class TangoAttributeMax(TangoAttributeHistory):
         self.attribute_name += '_max'
         old_label = self.properties.get('label', None)
         self.properties['label'] = [self.attribute_name]
-        result = TangoAttributeNew.save_properties(self, zip_file, folder)
+        result = TangoAttribute.save_properties(self, zip_file, folder)
         self.attribute_name = old_name
         if old_label is not None:
             self.properties['label'] = old_label

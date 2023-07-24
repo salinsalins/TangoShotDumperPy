@@ -1,8 +1,8 @@
 from tango import AttrDataFormat
-from Devices.TangoAttributeNew import *
+from Devices.TangoAttribute import *
 
 
-class ChannelADC(TangoAttributeNew):
+class ChannelADC(TangoAttribute):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.x_attr = None
