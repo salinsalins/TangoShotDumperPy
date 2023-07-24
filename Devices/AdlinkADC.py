@@ -3,7 +3,7 @@ import logging
 from tango import AttrQuality
 
 from Devices.ChannelADC import ChannelADC
-from PrototypeDumperDeviceNew import *
+from PrototypeDumperDevice import *
 
 
 class AdlinkADC(PrototypeDumperDevice):
@@ -48,6 +48,9 @@ class AdlinkADC(PrototypeDumperDevice):
         return True
 
     def save(self, log_file, zip_file, folder=None):
+        trigger_only = self.kwargs.get('trigger_only', False)
+        if trigger_only:
+            return
         if folder is None:
             folder = self.folder
         attributes = self.device.get_attribute_list()

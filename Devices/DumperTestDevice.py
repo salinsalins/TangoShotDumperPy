@@ -1,6 +1,8 @@
+import io
 import time
 import numpy
 
+from Devices.ChannelADC import ChannelADC
 from PrototypeDumperDevice import *
 
 
@@ -10,6 +12,7 @@ class DumperTestDevice(PrototypeDumperDevice):
     def __init__(self, delta_t=-1.0, points=0, folder='', properties=None):
         self.n = DumperTestDevice.n
         self.device_name = 'TestDevice_%d' % self.n
+        self.attribute_name = 'chany%d' % self.n
         super().__init__(self.device_name)
         self.shot = 0
         self.delta_t = delta_t
@@ -49,9 +52,20 @@ class DumperTestDevice(PrototypeDumperDevice):
         log_file.write('; %s=%f' % (self.device_name, self.time))
         print('     %s = %f' % (self.device_name, self.time))
         if self.points > 0:
-            signal = self.Channel(None, self.n, prefix='test_device_chany')  # PrototypeDumperDevice.Channel()
-            signal.x = numpy.linspace(0.0, 2.0 * numpy.pi, self.points)
-            signal.y = numpy.sin(signal.x + time.time() + self.n)
-            signal.save_data(zip_file, folder)
-            entry = folder + '/' + signal.name + "_parameters.txt"
+            x = numpy.linspace(0.0, 2.0 * numpy.pi, self.points)
+            y = numpy.sin(x + time.time() + self.n)
+            frmt = '%f; %f\r\n'
+            buf = io.StringIO('')
+            try:
+                for i in range(self.points):
+                    s = frmt % (x[i], y[i])
+                    buf.write(s.replace(",", "."))
+                zip_entry = folder + self.attribute_name + '.txt'
+                zip_file.writestr(zip_entry, buf.getvalue())
+            except KeyboardInterrupt:
+                raise
+            except:
+                log_exception('%s conversion error', self.full_name)
+                return False
+            entry = folder + self.attribute_name + '_parameters.txt'
             zip_file.writestr(entry, "name=%s\r\ndevice_name=%s\r\nxlabel=Phase [radians]\r\nunit=a.u." % (self.device_name, self.device_name))

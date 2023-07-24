@@ -1,7 +1,7 @@
 import io
 import json
 
-from PrototypeDumperDeviceNew import *
+from PrototypeDumperDevice import *
 
 
 class TangoAttribute(PrototypeDumperDevice):
