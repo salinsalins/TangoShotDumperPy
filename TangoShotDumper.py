@@ -41,7 +41,7 @@ DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\
 
 
 class TangoShotDumper:
-    _version = '2.6'
+    _version = '2.7'
     _name = 'Tango Shot Dumper'
 
     def __init__(self, config_file_name=None, level=logging.INFO):

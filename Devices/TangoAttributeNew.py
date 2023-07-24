@@ -1,4 +1,5 @@
 import io
+import json
 
 from PrototypeDumperDeviceNew import *
 
@@ -16,7 +17,7 @@ class TangoAttributeNew(PrototypeDumperDevice):
         self.force = force
         self.config = None
         self.attr = None
-        self.marks = {}
+        self.marks = json.loads(kwargs.get('marks', '{}'))
 
     def activate(self):
         if self.active:
@@ -43,11 +44,25 @@ class TangoAttributeNew(PrototypeDumperDevice):
             log_exception(self.logger, f'{self.device_name} Error activating {self.attribute_name}')
             return False
 
+    def save(self, log_file, zip_file, folder=None):
+        if folder is None:
+            folder = self.folder
+        if not self.read_properties(True):
+            return False
+        properties_saved = self.save_properties(zip_file, folder)
+        data_ready = self.read_attribute()
+        if not data_ready:
+            return False
+        log_saved = self.save_log(log_file)
+        data_saved = self.save_data(zip_file, folder)
+        if log_saved and data_saved and properties_saved:
+            return True
+        self.logger.warning("Error saving %s" % self.full_name)
+        return False
+
     def read_properties(self, force=False):
         # returns dictionary with attribute properties
-        # if len(self.properties) > 0 and not force:
-        #     return self.properties
-        retry_count = 3
+        retry_count = self.get_property("retry_count", 3)
         while retry_count > 0:
             retry_count -= 1
             try:
@@ -60,67 +75,47 @@ class TangoAttributeNew(PrototypeDumperDevice):
                     val = getattr(self.config, a, None)
                     if val is not None:
                         self.properties[a] = [str(val)]
+                # user defined attribute properties
                 db = self.device.get_device_db()
-                self.properties.update(
-                    db.get_device_attribute_property(self.device_name, self.attribute_name)[self.attribute_name])
+                pr = db.get_device_attribute_property(self.device_name, self.attribute_name)[self.attribute_name]
+                self.properties.update(pr)
                 return True
             except KeyboardInterrupt:
                 raise
             except:
-                log_exception(self.logger, '%s Can not read properties', self.full_name, no_info=False)
+                if retry_count == 2:
+                    log_exception(self.logger, '%s Can not read properties', self.full_name, no_info=False)
         self.logger.warning('%s Can not read properties', self.full_name)
         return False
 
-    def save(self, log_file, zip_file, folder=None):
-        if folder is None:
-            folder = self.folder
-        if not self.read_properties(True):
-            return False
-        properties_saved = False
-        log_saved = False
-        data_ready = False
-        data_saved = False
+    def read_attribute(self, **kwargs):
         retry_count = self.get_property("retry_count", 3)
         while retry_count > 0:
             retry_count -= 1
-            if not properties_saved:
-                properties_saved = self.save_properties(zip_file, folder)
-            if not data_ready:
-                data_ready = self.read_attribute()
-            if not data_ready:
-                continue
-            if not log_saved:
-                log_saved = self.save_log(log_file)
-            if not data_saved:
-                data_saved = self.save_data(zip_file, folder)
-            if log_saved and data_saved and properties_saved:
+            try:
+                device = kwargs.get('device', None)
+                if device is None:
+                    device = self.device
+                attr_name = kwargs.get('attr_name', None)
+                if attr_name is None:
+                    attr_name = self.attribute_name
+                self.attr = device.read_attribute(attr_name)
+                al = ['dim_x', 'dim_y', 'max_dim_x', 'max_dim_y', 'data_format', 'data_type',
+                      'unit', 'label', 'display_unit', 'format', 'min_value', 'max_value',
+                      'name', 'is_empty', 'has_failed', 'quality', 'nb_read', 'nb_written',
+                      'time']
+                for a in al:
+                    val = getattr(self.attr, a, '')
+                    if val:
+                        self.properties[a] = [str(val)]
+                self.properties['time_s'] = [str(self.attr.get_date().totime())]
                 return True
-        self.logger.warning("Error saving %s" % self.full_name)
-        return False
-
-    def read_attribute(self, **kwargs):
-        try:
-            device = kwargs.get('device', None)
-            if device is None:
-                device = self.device
-            attr_name = kwargs.get('attr_name', None)
-            if attr_name is None:
-                attr_name = self.attribute_name
-            self.attr = device.read_attribute(attr_name)
-            al = ['dim_x', 'dim_y', 'max_dim_x', 'max_dim_y', 'data_format', 'data_type',
-                  'unit', 'label', 'display_unit', 'format', 'min_value', 'max_value',
-                  'name', 'is_empty', 'has_failed', 'quality', 'nb_read', 'nb_written',
-                  'time']
-            for a in al:
-                val = getattr(self.attr, a, '')
-                if val:
-                    self.properties[a] = [str(val)]
-            self.properties['time_s'] = [str(self.attr.get_date().totime())]
-            return True
-        except KeyboardInterrupt:
-            raise
-        except:
-            log_exception("Error reading %s" % self.full_name)
+            except KeyboardInterrupt:
+                raise
+            except:
+                if retry_count == 2:
+                    log_exception("Error reading %s" % self.full_name)
+        self.logger.warning('Can not read %s', self.full_name)
         return False
 
     def save_properties(self, zip_file, folder=''):
@@ -270,5 +265,5 @@ class TangoAttributeNew(PrototypeDumperDevice):
                 raise
             except:
                 mrks[key] = float('nan')
-        self.marks = mrks
+        self.marks.update(mrks)
         return mrks
