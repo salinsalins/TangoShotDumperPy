@@ -10,9 +10,12 @@ class AdlinkADC(PrototypeDumperDevice):
     def __init__(self, device_name='binp/nbi/adc0', folder=None, **kwargs):
         super().__init__(device_name, **kwargs)
         self.shot_time = 1.0
-        self.folder = folder
+        if folder is None:
+            self.folder = device_name
+        else:
+            self.folder = folder
         self.shot = -7
-        self.shot = self.read_shot()
+        # self.shot = self.read_shot()
 
     def read_shot(self):
         try:
@@ -52,7 +55,7 @@ class AdlinkADC(PrototypeDumperDevice):
 
     def save(self, log_file, zip_file, folder=None):
         trigger = self.kwargs.get('trigger', 'save')
-        if trigger != 'save' or trigger != 'ignore':
+        if trigger != 'save' and trigger != 'ignore':
             return
         if folder is None:
             folder = self.folder
@@ -61,5 +64,6 @@ class AdlinkADC(PrototypeDumperDevice):
             if "chany" in attr:
                 channel = ChannelADC(self.device_name, attr, folder=folder)
                 channel.logger = self.logger
-                channel.activate()
+                if not channel.activate():
+                    continue
                 channel.save(log_file, zip_file, folder=folder)

@@ -39,6 +39,13 @@ class PicoLog1000(AdlinkADC):
         return time.time()
 
     def save(self, log_file, zip_file, folder=None):
+        trigger = self.kwargs.get('trigger', 'save')
+        if trigger != 'save' and trigger != 'ignore':
+            return
+        if folder is None:
+            folder = self.folder
+        if not folder.endswith('/'):
+            folder += '/'
         # read data ready
         data_ready = self.device.read_attribute('data_ready')
         if data_ready.quality != AttrQuality.ATTR_VALID or not data_ready.value:
@@ -68,6 +75,8 @@ class PicoLog1000(AdlinkADC):
         # save channels properties and data
         for i in channels_list:
             chan = ChannelADC(self.device_name, 'chany%02i'%i, folder)
+            if not chan.activate():
+                continue
             chan.read_properties()
             TangoAttribute.read_attribute(chan)
             chan.x_attr.value = times + (i * sampling / len(channels_list))

@@ -1,4 +1,4 @@
-from tango import AttrDataFormat
+from tango import AttrDataFormat, AttrQuality
 from Devices.TangoAttribute import *
 
 
@@ -16,6 +16,14 @@ class ChannelADC(TangoAttribute):
             self.active = False
             self.reactivate = False
             return False
+        try:
+            elapsed = self.device.read_attribute('elapsed')
+            if elapsed.quality != AttrQuality.ATTR_VALID:
+                self.properties['trigger_time'] = [str(time.time() - elapsed.value)]
+        except KeyboardInterrupt:
+            raise
+        except:
+            pass
         x_name = self.attribute_name.replace('chany', 'chanx')
         if x_name == self.attribute_name:
             self.x_attr = None
@@ -50,11 +58,8 @@ class ChannelADC(TangoAttribute):
             # self.logger.debug('%s save data not allowed', self.full_name)
             return True
         t0 = time.time()
-        if self.attr is None:
+        if self.attr is None or not hasattr(self.attr, 'value') or self.attr.value is None:
             self.logger.debug('%s No data to save', self.full_name)
-            return False
-        if self.attr.value is None:
-            self.logger.debug('%s Empty attribute - no data to save', self.full_name)
             return True
         if not folder.endswith('/'):
             folder += '/'
@@ -90,7 +95,6 @@ class ChannelADC(TangoAttribute):
             self.properties['data_format'] = old_data_format
         if result:
             self.logger.debug('%s Data saved to %s. Total %s points of %s averaged by %s in %s s', self.full_name, zip_entry, n, m, avg, time.time() - t0)
-            # self.logger.debug('%s Data saved to %s, total %ss', self.full_name, zip_entry, time.time() - t0)
         else:
             self.logger.debug('%s Data saved to %s with errors, total %s s', self.full_name, zip_entry, time.time() - t0)
         return result

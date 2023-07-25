@@ -49,6 +49,8 @@ class DumperTestDevice(PrototypeDumperDevice):
     def save(self, log_file, zip_file, folder: str = None):
         if folder is None:
             folder = self.folder
+        if not folder.endswith('/'):
+            folder += '/'
         log_file.write('; %s=%f' % (self.device_name, self.time))
         print('     %s = %f' % (self.device_name, self.time))
         if self.points > 0:
