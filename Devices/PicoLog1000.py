@@ -67,25 +67,28 @@ class PicoLog1000(AdlinkADC):
         trigger = self.device.read_attribute('trigger').value
         sampling = self.device.read_attribute('sampling').value
         points = self.device.read_attribute('points_per_channel').value
+        # generate times array
+        times = numpy.linspace(0, (points - 1) * sampling, points, dtype=numpy.float64)
+        trigger_offset = 0.0
+        if trigger < points:
+            trigger_offset = times[trigger]
+            times -= trigger_offset
+        # calculate approximate trigger time
         try:
             stop_time = self.device.read_attribute('stop_time')
-            if stop_time.quality != AttrQuality.ATTR_VALID:
-                self.properties['trigger_time'] = [str(stop_time.value - points*sampling)]
+            if stop_time.quality == AttrQuality.ATTR_VALID:
+                self.properties['trigger_time'] = [str(stop_time.value - (sampling*points - trigger_offset)/1000.0)]
         except KeyboardInterrupt:
             raise
         except:
             pass
-        # generate times array
-        times = numpy.linspace(0, (points - 1) * sampling, points, dtype=numpy.float64)
-        if trigger < points:
-            trigger_offset = times[trigger]
-            times -= trigger_offset
         # save channels properties and data
         for i in channels_list:
             chan = ChannelADC(self.device_name, 'chany%02i'%i, folder)
             if not chan.activate():
                 continue
             chan.read_properties()
+            chan.properties['trigger_time'] = self.properties['trigger_time']
             TangoAttribute.read_attribute(chan)
             chan.x_attr.value = times + (i * sampling / len(channels_list))
             chan.save_properties(zip_file, folder=folder)

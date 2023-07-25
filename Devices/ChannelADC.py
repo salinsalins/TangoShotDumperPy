@@ -18,8 +18,8 @@ class ChannelADC(TangoAttribute):
             return False
         try:
             elapsed = self.device.read_attribute('elapsed')
-            if elapsed.quality != AttrQuality.ATTR_VALID:
-                self.properties['trigger_time'] = [str(time.time() - elapsed.value)]
+            if elapsed.quality == AttrQuality.ATTR_VALID:
+                self.properties['trigger_time'] = [str(elapsed.time.totime() - elapsed.value)]
         except KeyboardInterrupt:
             raise
         except:
