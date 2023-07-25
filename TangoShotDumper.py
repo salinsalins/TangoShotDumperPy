@@ -164,8 +164,11 @@ class TangoShotDumper:
     def check_new_shot(self):
         for item in self.dumper_items:
             try:
-                if item.new_shot():
-                    self.write_shot_time(time.time())
+                t = item.new_shot()
+                if t:
+                    if not isinstance(t, float):
+                        t = time.time()
+                    self.write_shot_time(t)
                     self.shot_number_value += 1
                     self.write_shot_number(self.shot_number_value)
                     return True

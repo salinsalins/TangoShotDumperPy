@@ -1,6 +1,8 @@
 import io
 import json
 
+from tango import DeviceAttribute
+
 from PrototypeDumperDevice import *
 
 
@@ -16,7 +18,7 @@ class TangoAttribute(PrototypeDumperDevice):
             self.folder = folder
         self.force = force
         self.config = None
-        self.attr = None
+        self.attr = DeviceAttribute()
         self.marks = json.loads(kwargs.get('marks', '{}'))
 
     def activate(self):
@@ -49,15 +51,15 @@ class TangoAttribute(PrototypeDumperDevice):
             folder = self.folder
         if not self.read_properties(True):
             return False
-        properties_saved = self.save_properties(zip_file, folder)
         data_ready = self.read_attribute()
+        properties_saved = self.save_properties(zip_file, folder)
         if not data_ready:
             return False
         log_saved = self.save_log(log_file)
         data_saved = self.save_data(zip_file, folder)
         if log_saved and data_saved and properties_saved:
             return True
-        self.logger.warning("Error saving %s" % self.full_name)
+        # self.logger.warning("Error saving %s" % self.full_name)
         return False
 
     def read_properties(self, force=False):

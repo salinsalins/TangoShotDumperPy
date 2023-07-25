@@ -39,17 +39,20 @@ class AdlinkADC(PrototypeDumperDevice):
             return -t0
 
     def new_shot(self):
+        trigger = self.kwargs.get('trigger', 'save')
+        if trigger == 'ignore':
+            return False
         ns = self.read_shot()
         if ns < 0:
             return False
         if self.shot == ns:
             return False
         self.shot = ns
-        return True
+        return self.read_shot_time()
 
     def save(self, log_file, zip_file, folder=None):
-        trigger_only = self.kwargs.get('trigger_only', False)
-        if trigger_only:
+        trigger = self.kwargs.get('trigger', 'save')
+        if trigger != 'save' or trigger != 'ignore':
             return
         if folder is None:
             folder = self.folder

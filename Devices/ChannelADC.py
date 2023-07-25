@@ -5,7 +5,7 @@ from Devices.TangoAttribute import *
 class ChannelADC(TangoAttribute):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.x_attr = None
+        self.x_attr = DeviceAttribute()
         self.avg = kwargs.get('avg', None)
 
     def read_attribute(self):
