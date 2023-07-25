@@ -67,6 +67,14 @@ class PicoLog1000(AdlinkADC):
         trigger = self.device.read_attribute('trigger').value
         sampling = self.device.read_attribute('sampling').value
         points = self.device.read_attribute('points_per_channel').value
+        try:
+            stop_time = self.device.read_attribute('stop_time')
+            if stop_time.quality != AttrQuality.ATTR_VALID:
+                self.properties['trigger_time'] = [str(stop_time.value - points*sampling)]
+        except KeyboardInterrupt:
+            raise
+        except:
+            pass
         # generate times array
         times = numpy.linspace(0, (points - 1) * sampling, points, dtype=numpy.float64)
         if trigger < points:
