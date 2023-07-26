@@ -176,7 +176,7 @@ class TangoAttribute(PrototypeDumperDevice):
                     log_file.write(out_str)
                     np += 1
             if np == 0:
-                print('    ', label, '---- no marks')
+                print("  ", label, '---- no marks')
         elif data_format == 'IMAGE':
             self.logger.debug('Log save is not implemented for IMAGE attributes')
             return True

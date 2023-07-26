@@ -26,6 +26,7 @@ class DumperTestDevice(PrototypeDumperDevice):
         else:
             self.properties = properties
         DumperTestDevice.n += 1
+        self.time = time.time()
 
     def __str__(self):
         return self.device_name
@@ -34,16 +35,16 @@ class DumperTestDevice(PrototypeDumperDevice):
         if self.active:
             return True
         self.active = True
-        self.time = time.time()
         self.logger.debug("TestDevice %s activated" % self.device_name)
         return True
 
     def new_shot(self):
-        if 0.0 < self.delta_t < (time.time() - self.time):
-            self.shot += 1
-            self.time = time.time()
-            self.logger.debug("New shot %d from %s" % (self.shot, self.device_name))
-            return True
+        if self.delta_t > 0:
+            if (time.time() - self.time) > self.delta_t:
+                self.shot += 1
+                self.time = time.time()
+                self.logger.debug("New shot %d from %s" % (self.shot, self.device_name))
+                return True
         return False
 
     def save(self, log_file, zip_file, folder: str = None):

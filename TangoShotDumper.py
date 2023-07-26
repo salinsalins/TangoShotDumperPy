@@ -41,7 +41,7 @@ DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\
 
 
 class TangoShotDumper:
-    _version = '3.4'
+    _version = '3.5'
     _name = 'Tango Shot Dumper'
 
     def __init__(self, config_file_name=None, level=logging.INFO):
@@ -171,7 +171,7 @@ class TangoShotDumper:
                     self.write_shot_time(t)
                     self.shot_number_value += 1
                     self.write_shot_number(self.shot_number_value)
-                    return True
+                    return item
             except KeyboardInterrupt:
                 raise
             except:
@@ -252,12 +252,13 @@ class TangoShotDumper:
                 self.logger.info("No active devices")
                 return
             # check for new shot
-            if not self.check_new_shot():
+            nsd = self.check_new_shot()
+            if not nsd:
                 return
             # new shot - save signals
             dts = self.date_time_stamp()
             self.config['shot_dts'] = dts
-            print("\r\n**** %s New Shot %d *****" % (dts, self.shot_number_value))
+            print("\r\n**** %s New Shot %d from %s *****" % (dts, self.shot_number_value, nsd.full_name))
             self.make_log_folder()
             self.lock_output_dir()
             self.log_file = self.open_log_file(self.out_dir)

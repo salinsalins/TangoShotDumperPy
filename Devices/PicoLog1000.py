@@ -14,6 +14,7 @@ class PicoLog1000(AdlinkADC):
         super().__init__(tango_device_name, folder=folder, **kwargs)
         self.x = None
         self.shot = 0
+        self.armed = False
 
     def activate(self):
         if not super().activate():
@@ -23,10 +24,13 @@ class PicoLog1000(AdlinkADC):
             return True
         record_in_progress = self.device.read_attribute('record_in_progress')
         if record_in_progress.quality != AttrQuality.ATTR_VALID or record_in_progress.value:
-            self.logger.warning(f'{self.device_name} Record in progress - can not rearm')
+            self.logger.warning(f'{self.device_name} Can not rearm')
+            if record_in_progress.value:
+                self.armed = True
             return False
         self.device.wrire_attribute('record_in_progress', True)
         self.logger.debug(f'{self.device_name} Rearmed')
+        self.armed = True
         return True
 
     def read_shot(self):
@@ -34,7 +38,10 @@ class PicoLog1000(AdlinkADC):
         data_ready = self.device.read_attribute('data_ready')
         if data_ready.quality != AttrQuality.ATTR_VALID or not data_ready.value:
             return self.shot
-        return self.shot + 1
+        if self.armed:
+            self.armed = False
+            return self.shot + 1
+        return self.shot
 
     def read_shot_time(self):
         try:

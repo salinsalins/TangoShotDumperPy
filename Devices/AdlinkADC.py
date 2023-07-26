@@ -50,6 +50,9 @@ class AdlinkADC(PrototypeDumperDevice):
             return False
         if self.shot == ns:
             return False
+        if self.shot < 0:
+            self.shot = ns
+            return False
         self.shot = ns
         return self.read_shot_time()
 
