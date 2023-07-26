@@ -18,7 +18,7 @@ from log_exception import log_exception
 
 
 class TangoShotDumperServer(TangoServerPrototype):
-    server_version_value = '3.0'
+    server_version_value = '3.3'
     server_name_value = 'Tango Shot Dumper Server'
 
     shot_number = attribute(label="last_shot_number", dtype=int,
