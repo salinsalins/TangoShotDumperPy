@@ -19,6 +19,9 @@ class PicoLog1000(AdlinkADC):
     def activate(self):
         if not super().activate():
             return False
+        return self.rearm()
+
+    def rearm(self):
         rearm = self.kwargs.get('rearm', False)
         if not rearm:
             return True
@@ -26,7 +29,7 @@ class PicoLog1000(AdlinkADC):
         if record_in_progress.quality != AttrQuality.ATTR_VALID or record_in_progress.value:
             self.logger.warning(f'{self.device_name} Can not rearm')
             if record_in_progress.value:
-                self.armed = True
+                self.armed = False
             return False
         self.device.wrire_attribute('record_in_progress', True)
         self.logger.debug(f'{self.device_name} Rearmed')
@@ -113,3 +116,4 @@ class PicoLog1000(AdlinkADC):
             raise
         except:
             log_exception(self.logger, 'Can not save %s',self.full_name)
+        return self.rearm()
