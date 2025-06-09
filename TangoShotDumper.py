@@ -12,7 +12,7 @@ import sys
 import time
 import zipfile
 
-if '../TangoUtils' not in sys.path: sys.path.append('../TangoUtils')
+if os.path.realpath('../TangoUtils') not in sys.path: sys.path.append(os.path.realpath('../TangoUtils'))
 from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
@@ -28,7 +28,6 @@ for filename in os.listdir(folder_name):
     fns = filename.split('.')
     if fns[-1] in ('py', 'pyw'):
         module_name = fns[0]
-        # a = runpy.run_path(os.path.join('./', folder_name, filename), run_name='__main__')
         try:
             exec(f'from {folder_name}.{module_name} import {module_name} as {module_name}')
         except:
@@ -44,8 +43,8 @@ class TangoShotDumper:
     _version = '3.5'
     _name = 'Tango Shot Dumper'
 
-    def __init__(self, config_file_name=None, level=logging.INFO):
-        self.logger = config_logger(format_string=LOG_FORMAT_STRING_SHORT, level=level)
+    def __init__(self, config_file_name=None, log_level=logging.INFO):
+        self.logger = config_logger(format_string=LOG_FORMAT_STRING_SHORT, level=log_level)
         self.log_file = None
         self.zip_file = None
         self.out_dir = None
@@ -306,7 +305,7 @@ if __name__ == "__main__":
         level = int(sys.argv[1])
     except:
         level = 20
-    tsd = TangoShotDumper(level=level)
+    tsd = TangoShotDumper(log_level=level)
     if tsd.set_config():
         t0 = time.time()
         while True:
