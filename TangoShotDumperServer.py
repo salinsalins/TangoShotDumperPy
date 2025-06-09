@@ -33,6 +33,12 @@ class TangoShotDumperServer(TangoServerPrototype):
                           unit="s", format="%f",
                           doc="Last shot time")
 
+    device_list = attribute(label="device_list", dtype=[str],
+                          display_level=DispLevel.OPERATOR,
+                          access=AttrWriteType.READ,
+                          unit="", format="%s",
+                          doc="Dumper device list")
+
     # def init_device(self):
     #     # init base class TangoServerPrototype self.set_config() will be called insight
     #     super().init_device()
@@ -45,6 +51,7 @@ class TangoShotDumperServer(TangoServerPrototype):
         try:
             # set_config for TangoServerPrototype part
             super().set_config()
+            self.device_list_value = []
             self.pre = f'{self.name} TangoShotDumperServer'
             self.set_state(DevState.INIT, 'Initial configuration started')
             # set shot_number and short time from DB
@@ -70,6 +77,7 @@ class TangoShotDumperServer(TangoServerPrototype):
             else:
                 self.set_state(DevState.FAULT, 'Initial configuration error')
                 return False
+            self.device_list_value = [di.full_name for di in self.dumper.dumper_items]
         except:
             self.log_exception('Configuration set error')
             self.set_state(DevState.FAULT, 'Configuration set error')
