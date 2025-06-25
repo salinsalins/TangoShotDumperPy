@@ -160,6 +160,7 @@ class TangoShotDumper:
                 if item.activate():
                     n += 1
                     self.active.add(item)
+                    self.inactive.remove(item)
                 else:
                     self.active.remove(item)
                     self.inactive.add(item)
@@ -170,7 +171,8 @@ class TangoShotDumper:
         return n
 
     def check_new_shot(self):
-        for item in self.dumper_items:
+        for item in self.active:
+        # for item in self.dumper_items:
             try:
                 t = item.new_shot()
                 if t:
@@ -184,7 +186,7 @@ class TangoShotDumper:
                 raise
             except:
                 log_exception(self, "Error checking new shot for %s", item.device_name)
-        return False
+        return None
 
     @staticmethod
     def date_time_stamp():
@@ -266,7 +268,7 @@ class TangoShotDumper:
             # new shot - save signals
             dts = self.date_time_stamp()
             self.config['shot_dts'] = dts
-            print("\r\n**** %s New Shot %d from %s *****" % (dts, self.shot_number_value, nsd.full_name))
+            print("\r\n\n***** %s New Shot %d from %s *****" % (dts, self.shot_number_value, nsd.full_name))
             self.make_log_folder()
             self.lock_output_dir()
             self.log_file = self.open_log_file(self.out_dir)
@@ -297,6 +299,8 @@ class TangoShotDumper:
             zfn = os.path.basename(self.zip_file.filename)
             self.zip_file.close()
             self.log_file.write('; File=%s\n' % zfn)
+            self.log_file.write('; Trigger=%s\n' % nsd.full_name)
+            self.log_file.write('; Dumper_version=%s\n' % APPLICATION_VERSION)
             self.log_file.close()
             self.unlock_output_dir()
             self.write_config()
@@ -304,8 +308,9 @@ class TangoShotDumper:
             raise
         except:
             log_exception(self, "Unexpected exception")
-        print("Active items: ", len(self.active), "  Inactive items: ", len(self.inactive))
+        # print("Active items: ", len(self.active), "  Inactive items: ", len(self.inactive))
         print(self.time_stamp(), "Waiting for next shot ...")
+        print("")
         return
 
 
