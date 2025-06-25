@@ -309,8 +309,8 @@ class TangoShotDumper:
         except:
             log_exception(self, "Unexpected exception")
         # print("Active items: ", len(self.active), "  Inactive items: ", len(self.inactive))
-        print(self.time_stamp(), "Waiting for next shot ...")
         print("")
+        print(self.time_stamp(), "Waiting for next shot ...")
         return
 
 
