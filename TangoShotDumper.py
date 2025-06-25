@@ -12,10 +12,19 @@ import sys
 import time
 import zipfile
 
+from Terminal import CONFIG_FILE
+
 if os.path.realpath('../TangoUtils') not in sys.path: sys.path.append(os.path.realpath('../TangoUtils'))
 from Configuration import Configuration
 from config_logger import config_logger, LOG_FORMAT_STRING_SHORT
 from log_exception import log_exception
+
+ORGANIZATION_NAME = 'BINP'
+APPLICATION_NAME = 'Tango Shot Dumper'
+APPLICATION_NAME_SHORT = os.path.basename(__file__).replace('.py', '')
+APPLICATION_VERSION = '3.6'
+CONFIG_FILE = APPLICATION_NAME_SHORT + '.json'
+UI_FILE = APPLICATION_NAME_SHORT + '.ui'
 
 # import all modules from .\Devices folder
 folder_name = 'Devices'
@@ -40,8 +49,8 @@ DEFAULT_CONFIG = {"sleep": 1.0, 'log_level': logging.DEBUG, "out_root_dir": '.\\
 
 
 class TangoShotDumper:
-    _version = '3.5'
-    _name = 'Tango Shot Dumper'
+    _version = APPLICATION_VERSION
+    _name = APPLICATION_NAME
 
     def __init__(self, config_file_name=None, log_level=logging.INFO):
         self.logger = config_logger(format_string=LOG_FORMAT_STRING_SHORT, level=log_level)
@@ -51,7 +60,7 @@ class TangoShotDumper:
         self.locked = False
         self.lock_file = None
         if config_file_name is None:
-            config_file_name = self.__class__.__name__ + '.json'
+            config_file_name = CONFIG_FILE
         self.config_file_name = config_file_name
         # default config
         self.config = Configuration(self.config_file_name, DEFAULT_CONFIG)
@@ -305,7 +314,11 @@ if __name__ == "__main__":
         level = int(sys.argv[1])
     except:
         level = 20
-    tsd = TangoShotDumper(log_level=level)
+    try:
+        config = int(sys.argv[2])
+    except:
+        config = CONFIG_FILE
+    tsd = TangoShotDumper(config, log_level=level)
     if tsd.set_config():
         t0 = time.time()
         while True:
