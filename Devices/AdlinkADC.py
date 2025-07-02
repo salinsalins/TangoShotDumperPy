@@ -7,7 +7,12 @@ from PrototypeDumperDevice import *
 
 
 class AdlinkADC(PrototypeDumperDevice):
-    def __init__(self, device_name='binp/nbi/adc0', folder=None, **kwargs):
+    def __init__(self, device_name=None, folder=None, **kwargs):
+        if 'dev' in kwargs:
+            if device_name is None:
+                device_name = kwargs['dev']
+        if device_name is None:
+            device_name = 'binp/nbi/adc0'
         super().__init__(device_name, **kwargs)
         self.shot_time = 1.0
         if folder is None:

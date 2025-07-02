@@ -64,9 +64,10 @@ class TangoShotDumper:
         self.config_file_name = config_file_name
         # default config
         self.config = Configuration(self.config_file_name, DEFAULT_CONFIG)
-        self.out_root_dir = self.config.get("out_root_dir")
-        self.shot_number_value = self.config.get("shot_number")
-        self.shot_time_value = self.config.get("shot_time")
+        self.out_root_dir = self.config.get("out_root_dir", "D:\\data\\")
+        self.shot_number_value = self.config.get("shot_number", 84892)
+        self.shot_time_value = self.config.get("shot_time", 0.0)
+        self.save = self.config.get("save", 'all')
         self.dumper_items = []
         self.device_groups = {}
         self.active = set()
@@ -160,9 +161,11 @@ class TangoShotDumper:
                 if item.activate():
                     n += 1
                     self.active.add(item)
-                    self.inactive.remove(item)
+                    if item in self.inactive:
+                        self.inactive.remove(item)
                 else:
-                    self.active.remove(item)
+                    if item in self.active:
+                        self.active.remove(item)
                     self.inactive.add(item)
             except KeyboardInterrupt:
                 raise
@@ -276,6 +279,8 @@ class TangoShotDumper:
             self.log_file.write(dts)
             # Write shot number
             self.log_file.write('; Shot=%d; Shot_time=%s' % (self.shot_number_value, self.shot_time_value))
+            self.log_file.write('; Dumper_version=%s' % APPLICATION_VERSION)
+            self.log_file.write('; Trigger=%s' % nsd.full_name)
             # Open zip file
             self.zip_file = self.open_zip_file(self.out_dir)
             # for item in self.dumper_items:
@@ -287,7 +292,11 @@ class TangoShotDumper:
                     item = self.device_groups[device][item_name]
                     if item.active:
                         try:
-                            item.save(self.log_file, self.zip_file)
+                            if self.save == 'debug':
+                                self.log_file.write('; %s' % item.full_name)
+                                print('item:', item.full_name)
+                            else:
+                                item.save(self.log_file, self.zip_file)
                             count += 1
                         except KeyboardInterrupt:
                             raise
@@ -299,8 +308,6 @@ class TangoShotDumper:
             zfn = os.path.basename(self.zip_file.filename)
             self.zip_file.close()
             self.log_file.write('; File=%s\n' % zfn)
-            self.log_file.write('; Trigger=%s\n' % nsd.full_name)
-            self.log_file.write('; Dumper_version=%s\n' % APPLICATION_VERSION)
             self.log_file.close()
             self.unlock_output_dir()
             self.write_config()

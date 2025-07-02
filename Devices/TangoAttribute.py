@@ -32,7 +32,7 @@ class TangoAttribute(PrototypeDumperDevice):
             return False
         try:
             if self.attribute_name not in self.device.get_attribute_list():
-                self.logger.error(f'{self.device_name} do not have attribute {self.attribute_name}')
+                self.logger.warning(f'{self.device_name} do not have attribute {self.attribute_name}')
                 self.active = False
                 self.reactivate = False
                 return False
@@ -43,7 +43,7 @@ class TangoAttribute(PrototypeDumperDevice):
             raise
         except:
             self.active = False
-            log_exception(self.logger, f'{self.device_name} Error activating {self.attribute_name}')
+            log_exception(self.logger, f'{self.device_name} Error activating {self.attribute_name}', no_info=True)
             return False
 
     def save(self, log_file, zip_file, folder=None):
