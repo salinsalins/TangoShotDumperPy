@@ -279,6 +279,7 @@ class TangoShotDumper:
             self.log_file.write(dts)
             # Write shot number
             self.log_file.write('; Shot=%d; Shot_time=%s' % (self.shot_number_value, self.shot_time_value))
+            self.log_file.write('; DTS=%s' % dts)
             self.log_file.write('; Dumper_version=%s' % APPLICATION_VERSION)
             self.log_file.write('; Trigger=%s' % nsd.full_name)
             # Open zip file

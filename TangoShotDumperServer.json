@@ -2,8 +2,8 @@
     "sleep": 3.0,
     "log_level": 10,
     "out_root_dir": ".\\data\\",
-    "shot_number": 17,
-    "shot_time": 1751449930.6695387,
+    "shot_number": 29,
+    "shot_time": 1751450650.9450252,
     "devices": [
         {
             "eval": "TangoAttribute('auto/manual_write/scalar_atr','DO_NOT_SHOW', folder='triger')"
@@ -152,5 +152,5 @@
     ],
     "save": "debug",
     "shot": 84892,
-    "shot_dts": "2025-07-02 16:52:26"
+    "shot_dts": "2025-07-02 17:04:27"
 }
