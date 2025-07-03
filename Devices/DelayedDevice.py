@@ -1,4 +1,5 @@
 import time
+import zipfile
 
 from PrototypeDumperDevice import PrototypeDumperDevice
 
@@ -25,6 +26,15 @@ class DelayedDevice(PrototypeDumperDevice):
                 log = item[2]
                 folder = item[3]
                 # save data to file
+                zip.filename
+                log.buffer.name
+                zip_file = zipfile.ZipFile(zip.filename, 'a', compression=zipfile.ZIP_DEFLATED)
+                # log_file = open(log.buffer.name, 'a', encoding='cp1251')
+                log_file = open('test.log', 'a', encoding='cp1251')
                 self.logger.debug('Delayed save at %s', time.time())
+                self.parent.save(log_file, zip_file, folder)
+                zip_file.close()
+                log_file.close()
+
         return True
 
