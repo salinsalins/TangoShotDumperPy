@@ -1,24 +1,11 @@
-import logging
-
-from tango import AttrQuality
-
-from Devices.ChannelADC import ChannelADC
-from PrototypeDumperDevice import *
+import time
 
 
-class DelayedDevice(PrototypeDumperDevice):
-    def __init__(self, device_name=None, folder=None, delay=0.0, **kwargs):
-        if 'dev' in kwargs:
-            if device_name is None:
-                device_name = kwargs['dev']
-        if device_name is None:
-            device_name = 'binp/nbi/adc0'
-        super().__init__(device_name, **kwargs)
-        if folder is None:
-            self.folder = device_name
+class DelayedDevice():
+    def __init__(self, parent, delay=0.0):
         self.save_list = []
+        self.parent = parent
         self.delay = delay
-        self.folder = folder
 
     def save(self, log_file, zip_file, folder=None):
         self.save_list.append((time.time(), zip_file, log_file, folder))
