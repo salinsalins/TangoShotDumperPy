@@ -2,6 +2,7 @@ import time, io, os
 import zipfile
 
 from PrototypeDumperDevice import PrototypeDumperDevice
+from log_exception import log_exception
 
 
 class DelayedDevice(PrototypeDumperDevice):
