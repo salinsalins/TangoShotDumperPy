@@ -22,33 +22,37 @@ class DelayedDevice(PrototypeDumperDevice):
 
     def activate(self):
         self.active = True
-        if self.save_list:
-            t = self.save_list[0][0]
-            if time.time() - t >= self.delay:
-                self.logger.debug('Delayed save after %s s', time.time() - t)
-                item = self.save_list.pop(0)
-                zip = item[1].filename
-                log = item[2].buffer.name
-                folder = item[3]
-                pos = item[6]
-                # save data to file
-                # log_file = open(log, 'wb', encoding='cp1251')
-                # log_file = open('test.log', 'a', encoding='cp1251')
-                text_buffer = io.StringIO()
-                zip_file = zipfile.ZipFile(zip, 'a', compression=zipfile.ZIP_DEFLATED)
-                self.parent.save(text_buffer, zip_file, folder)
-                zip_file.close()
-                # log_file.close()
-                # correct log file
-                fs = os.path.getsize(log)
-                log_file = open(log, 'rb')
-                log_file.seek(pos)
-                tail = log_file.read()
-                log_file.close()
-                log_file = open(log, 'rb+')
-                log_file.seek(pos)
-                log_file.write(text_buffer.getvalue().encode())
-                log_file.write(tail)
-                log_file.close()
+        try:
+            if self.save_list:
+                t = self.save_list[0][0]
+                if time.time() - t >= self.delay:
+                    self.logger.debug('Delayed save after %s s', time.time() - t)
+                    item = self.save_list.pop(0)
+                    zip = item[1].filename
+                    log = item[2].buffer.name
+                    folder = item[3]
+                    pos = item[6]
+                    # save data to file
+                    # log_file = open(log, 'wb', encoding='cp1251')
+                    # log_file = open('test.log', 'a', encoding='cp1251')
+                    text_buffer = io.StringIO()
+                    zip_file = zipfile.ZipFile(zip, 'a', compression=zipfile.ZIP_DEFLATED)
+                    self.parent.save(text_buffer, zip_file, folder)
+                    zip_file.close()
+                    # log_file.close()
+                    # correct log file
+                    fs = os.path.getsize(log)
+                    log_file = open(log, 'rb')
+                    log_file.seek(pos)
+                    tail = log_file.read()
+                    log_file.close()
+                    log_file = open(log, 'rb+')
+                    log_file.seek(pos)
+                    log_file.write(text_buffer.getvalue().encode())
+                    log_file.write(tail)
+                    log_file.close()
+        except:
+            log_exception()
+            return False
         return True
 
